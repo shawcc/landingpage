@@ -292,9 +292,42 @@ button {
   padding: 16px 18px 18px;
 }
 
+.example-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 18px 0;
+}
+
+.example-card {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid var(--line-dark);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.example-card strong {
+  font-size: 13px;
+}
+
+.example-card span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .conversation-item {
   display: grid;
   gap: 8px;
+}
+
+.conversation-item.current {
+  padding-top: 4px;
+  border-top: 1px dashed #e6edf5;
 }
 
 .assistant-bubble {
@@ -304,6 +337,18 @@ button {
   color: #344054;
   font-size: 13px;
   line-height: 1.65;
+}
+
+.user-bubble {
+  margin-left: auto;
+  max-width: 92%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eaf3ff;
+  color: #1f2937;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
 }
 
 .assistant-input {
@@ -316,6 +361,21 @@ button {
   background: #fff;
   color: var(--text);
   line-height: 1.7;
+}
+
+.step-actions {
+  display: grid;
+  grid-template-columns: 96px 1fr 96px;
+  gap: 10px;
+  align-items: center;
+  padding: 0 18px 18px;
+}
+
+.step-indicator {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .draft-preview {
@@ -378,6 +438,10 @@ button {
 
   .assistant-panel {
     position: static;
+  }
+
+  .example-list {
+    grid-template-columns: 1fr;
   }
 }
 

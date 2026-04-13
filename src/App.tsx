@@ -35,6 +35,12 @@ type DraftPayload = {
   }>
 }
 
+type AssistantExample = {
+  answers: AssistantAnswers
+  description: string
+  title: string
+}
+
 const assistantPrompts = [
   {
     key: 'problem',
@@ -67,6 +73,45 @@ const assistantPrompts = [
     placeholder: '例如：了解更多、联系咨询、预约演示。',
   },
 ] as const
+
+const assistantExamples: AssistantExample[] = [
+  {
+    title: '客服协同插件',
+    description: '适合服务团队、工单、协同处理类产品。',
+    answers: {
+      problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
+      audience: '适合服务团队、运营团队，以及流程较复杂的中大型企业。',
+      capabilities: '工单协同、权限管理、SLA 管控',
+      scenes: '跨部门协作、客户服务处理、流程升级与跟踪',
+      tone: '专业、可信、简洁，不要太营销',
+      cta: '了解更多或预约演示',
+    },
+  },
+  {
+    title: '营销活动插件',
+    description: '适合优惠、促销、活动配置类产品。',
+    answers: {
+      problem: '帮助商家更快配置营销活动，降低活动配置门槛并减少执行错误。',
+      audience: '适合需要频繁做营销活动的电商商家、运营人员和增长团队。',
+      capabilities: '活动配置、规则校验、数据看板',
+      scenes: '大促活动、日常促销、新品上线',
+      tone: '清晰、直接、偏业务说明，不要过度销售化',
+      cta: '查看演示或联系咨询',
+    },
+  },
+  {
+    title: '数据分析插件',
+    description: '适合经营分析、报表与看板类产品。',
+    answers: {
+      problem: '帮助团队统一查看经营数据，减少多系统切换和口径不一致的问题。',
+      audience: '适合运营、管理层和需要经常查看报表的业务团队。',
+      capabilities: '核心指标看板、报表汇总、异常提醒',
+      scenes: '经营复盘、业务监控、日报周报分析',
+      tone: '稳重、专业、强调可信度',
+      cta: '了解方案或申请试用',
+    },
+  },
+]
 
 const defaultAnswers: AssistantAnswers = {
   problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
@@ -387,6 +432,7 @@ function DraftPreview({ draft }: { draft: Value }) {
 
 function AssistantPanel({
   answers,
+  currentStep,
   errorMessage,
   draft,
   isGenerating,
@@ -394,10 +440,14 @@ function AssistantPanel({
   onChangeAnswer,
   onCopy,
   onGenerate,
+  onNextStep,
+  onPrevStep,
   onReplace,
+  onUseExample,
   statusLabel,
 }: {
   answers: AssistantAnswers
+  currentStep: number
   errorMessage: string | null
   draft: Value
   isGenerating: boolean
@@ -405,9 +455,15 @@ function AssistantPanel({
   onChangeAnswer: (key: keyof AssistantAnswers, value: string) => void
   onCopy: () => void
   onGenerate: () => void
+  onNextStep: () => void
+  onPrevStep: () => void
   onReplace: () => void
+  onUseExample: (example: AssistantExample) => void
   statusLabel: string
 }) {
+  const activePrompt = assistantPrompts[currentStep]
+  const isLastStep = currentStep === assistantPrompts.length - 1
+
   return (
     <aside className="assistant-panel">
       <div className="assistant-card">
@@ -426,23 +482,56 @@ function AssistantPanel({
           {errorMessage ? <span className="assistant-error">{errorMessage}</span> : null}
         </div>
 
+        <div className="example-list">
+          {assistantExamples.map((example) => (
+            <button
+              key={example.title}
+              className="example-card"
+              onClick={() => onUseExample(example)}
+              disabled={isGenerating}
+            >
+              <strong>{example.title}</strong>
+              <span>{example.description}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="conversation-list">
-          {assistantPrompts.map((item, index) => (
+          {assistantPrompts.slice(0, currentStep).map((item, index) => (
             <div key={item.key} className="conversation-item">
               <div className="assistant-bubble">
                 {index + 1}. {item.title}
               </div>
-              <textarea
-                className="assistant-input"
-                disabled={isGenerating}
-                value={answers[item.key]}
-                placeholder={item.placeholder}
-                onChange={(event) =>
-                  onChangeAnswer(item.key as keyof AssistantAnswers, event.target.value)
-                }
-              />
+              <div className="user-bubble">{answers[item.key]}</div>
             </div>
           ))}
+
+          <div className="conversation-item current">
+            <div className="assistant-bubble">
+              {currentStep + 1}. {activePrompt.title}
+            </div>
+            <textarea
+              className="assistant-input"
+              disabled={isGenerating}
+              value={answers[activePrompt.key]}
+              placeholder={activePrompt.placeholder}
+              onChange={(event) =>
+                onChangeAnswer(activePrompt.key as keyof AssistantAnswers, event.target.value)
+              }
+            />
+          </div>
+        </div>
+
+        <div className="step-actions">
+          <button className="secondary-action" onClick={onPrevStep} disabled={isGenerating || currentStep === 0}>
+            上一步
+          </button>
+          <div className="step-indicator">
+            {currentStep + 1} / {assistantPrompts.length}
+          </div>
+          <button className="secondary-action" onClick={onNextStep} disabled={isGenerating}>
+            {isLastStep ? '完成提问' : '下一题'}
+          </button>
         </div>
       </div>
 
@@ -474,6 +563,7 @@ function AssistantPanel({
 
 function App() {
   const [seed, setSeed] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0)
   const [value, setValue] = useState<Value>([
     paragraph('这里是插件详情编辑区。你可以直接编写内容，也可以使用右侧 AI 助手辅助生成。'),
   ])
@@ -485,6 +575,22 @@ function App() {
 
   const updateAnswer = (key: keyof AssistantAnswers, nextValue: string) => {
     setAnswers((current) => ({ ...current, [key]: nextValue }))
+  }
+
+  const nextStep = () => {
+    setCurrentStep((current) => Math.min(current + 1, assistantPrompts.length - 1))
+  }
+
+  const prevStep = () => {
+    setCurrentStep((current) => Math.max(current - 1, 0))
+  }
+
+  const useExample = (example: AssistantExample) => {
+    setAnswers(example.answers)
+    setDraft(buildDraft(example.answers))
+    setCurrentStep(assistantPrompts.length - 1)
+    setStatusLabel(`已套用范例：${example.title}`)
+    setErrorMessage(null)
   }
 
   const generateDraft = async () => {
@@ -575,6 +681,7 @@ function App() {
 
         <AssistantPanel
           answers={answers}
+          currentStep={currentStep}
           errorMessage={errorMessage}
           draft={draft}
           isGenerating={isGenerating}
@@ -582,7 +689,10 @@ function App() {
           onChangeAnswer={updateAnswer}
           onCopy={copyDraft}
           onGenerate={generateDraft}
+          onNextStep={nextStep}
+          onPrevStep={prevStep}
           onReplace={replaceWithDraft}
+          onUseExample={useExample}
           statusLabel={statusLabel}
         />
       </main>

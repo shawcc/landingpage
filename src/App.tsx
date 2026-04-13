@@ -313,7 +313,19 @@ const plugins = [
   DetailSectionPlugin,
 ]
 
-function EditorCanvas({ initialValue, onChange }: { initialValue: Value; onChange: (value: Value) => void }) {
+function AiSparkIcon() {
+  return <span className="ai-spark">AI</span>
+}
+
+function EditorCanvas({
+  initialValue,
+  onChange,
+  onOpenAi,
+}: {
+  initialValue: Value
+  onChange: (value: Value) => void
+  onOpenAi: () => void
+}) {
   const editor = usePlateEditor({
     plugins,
     value: initialValue,
@@ -342,7 +354,7 @@ function EditorCanvas({ initialValue, onChange }: { initialValue: Value; onChang
             plateEditor.tf.toggle.mark({ key: 'bold' })
           }}
         >
-          加粗
+          B
         </button>
         <button
           onMouseDown={(event) => {
@@ -350,7 +362,7 @@ function EditorCanvas({ initialValue, onChange }: { initialValue: Value; onChang
             plateEditor.tf.toggle.mark({ key: 'italic' })
           }}
         >
-          斜体
+          I
         </button>
         <button
           onMouseDown={(event) => {
@@ -358,7 +370,7 @@ function EditorCanvas({ initialValue, onChange }: { initialValue: Value; onChang
             plateEditor.tf.toggle.mark({ key: 'underline' })
           }}
         >
-          下划线
+          U
         </button>
         <button
           onMouseDown={(event) => {
@@ -384,6 +396,11 @@ function EditorCanvas({ initialValue, onChange }: { initialValue: Value; onChang
         >
           小标题
         </button>
+        <div className="toolbar-spacer" />
+        <button className="editor-ai-button" type="button" onClick={onOpenAi}>
+          <AiSparkIcon />
+          AI 生成详情
+        </button>
       </div>
 
       <Plate
@@ -394,7 +411,7 @@ function EditorCanvas({ initialValue, onChange }: { initialValue: Value; onChang
       >
         <PlateContent
           className="editor-content"
-          placeholder="请输入插件详情，或使用右侧 AI 助手共同生成内容"
+          placeholder="请输入插件详情（图片支持缩放）"
         />
       </Plate>
     </div>
@@ -430,14 +447,16 @@ function DraftPreview({ draft }: { draft: Value }) {
   )
 }
 
-function AssistantPanel({
+function AssistantDrawer({
   answers,
   currentStep,
   errorMessage,
   draft,
   isGenerating,
+  isOpen,
   onApply,
   onChangeAnswer,
+  onClose,
   onCopy,
   onGenerate,
   onNextStep,
@@ -451,8 +470,10 @@ function AssistantPanel({
   errorMessage: string | null
   draft: Value
   isGenerating: boolean
+  isOpen: boolean
   onApply: () => void
   onChangeAnswer: (key: keyof AssistantAnswers, value: string) => void
+  onClose: () => void
   onCopy: () => void
   onGenerate: () => void
   onNextStep: () => void
@@ -465,15 +486,19 @@ function AssistantPanel({
   const isLastStep = currentStep === assistantPrompts.length - 1
 
   return (
-    <aside className="assistant-panel">
-      <div className="assistant-card">
-        <div className="assistant-card__header">
+    <>
+      <div
+        className={isOpen ? 'drawer-mask visible' : 'drawer-mask'}
+        onClick={onClose}
+      />
+      <aside className={isOpen ? 'assistant-drawer open' : 'assistant-drawer'}>
+        <div className="assistant-drawer__header">
           <div>
             <strong>AI 助手</strong>
-            <span>通过引导式交流，先把详情内容梳理出来。</span>
+            <span>在当前详情编辑页里，边问边写，最后插入富文本。</span>
           </div>
-          <button className="ghost-button" onClick={onGenerate} disabled={isGenerating}>
-            {isGenerating ? '生成中...' : '生成草稿'}
+          <button className="drawer-close" type="button" onClick={onClose}>
+            关闭
           </button>
         </div>
 
@@ -482,90 +507,99 @@ function AssistantPanel({
           {errorMessage ? <span className="assistant-error">{errorMessage}</span> : null}
         </div>
 
-        <div className="example-list">
-          {assistantExamples.map((example) => (
-            <button
-              key={example.title}
-              className="example-card"
-              onClick={() => onUseExample(example)}
-              disabled={isGenerating}
-            >
-              <strong>{example.title}</strong>
-              <span>{example.description}</span>
-            </button>
-          ))}
+        <div className="assistant-block">
+          <div className="assistant-block__title">范例</div>
+          <div className="example-list">
+            {assistantExamples.map((example) => (
+              <button
+                key={example.title}
+                className="example-card"
+                onClick={() => onUseExample(example)}
+                disabled={isGenerating}
+              >
+                <strong>{example.title}</strong>
+                <span>{example.description}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="conversation-list">
-          {assistantPrompts.slice(0, currentStep).map((item, index) => (
-            <div key={item.key} className="conversation-item">
-              <div className="assistant-bubble">
-                {index + 1}. {item.title}
+        <div className="assistant-block grow">
+          <div className="assistant-block__title">对话引导</div>
+          <div className="conversation-list">
+            {assistantPrompts.slice(0, currentStep).map((item, index) => (
+              <div key={item.key} className="conversation-item">
+                <div className="assistant-bubble">
+                  {index + 1}. {item.title}
+                </div>
+                <div className="user-bubble">{answers[item.key]}</div>
               </div>
-              <div className="user-bubble">{answers[item.key]}</div>
+            ))}
+
+            <div className="conversation-item current">
+              <div className="assistant-bubble">
+                {currentStep + 1}. {activePrompt.title}
+              </div>
+              <textarea
+                className="assistant-input"
+                disabled={isGenerating}
+                value={answers[activePrompt.key]}
+                placeholder={activePrompt.placeholder}
+                onChange={(event) =>
+                  onChangeAnswer(activePrompt.key as keyof AssistantAnswers, event.target.value)
+                }
+              />
             </div>
-          ))}
+          </div>
 
-          <div className="conversation-item current">
-            <div className="assistant-bubble">
-              {currentStep + 1}. {activePrompt.title}
+          <div className="step-actions">
+            <button
+              className="secondary-action"
+              onClick={onPrevStep}
+              disabled={isGenerating || currentStep === 0}
+            >
+              上一步
+            </button>
+            <div className="step-indicator">
+              {currentStep + 1} / {assistantPrompts.length}
             </div>
-            <textarea
-              className="assistant-input"
-              disabled={isGenerating}
-              value={answers[activePrompt.key]}
-              placeholder={activePrompt.placeholder}
-              onChange={(event) =>
-                onChangeAnswer(activePrompt.key as keyof AssistantAnswers, event.target.value)
-              }
-            />
+            <button className="secondary-action" onClick={onNextStep} disabled={isGenerating}>
+              {isLastStep ? '完成提问' : '下一题'}
+            </button>
           </div>
         </div>
 
-        <div className="step-actions">
-          <button className="secondary-action" onClick={onPrevStep} disabled={isGenerating || currentStep === 0}>
-            上一步
-          </button>
-          <div className="step-indicator">
-            {currentStep + 1} / {assistantPrompts.length}
+        <div className="assistant-block">
+          <div className="assistant-result-head">
+            <div className="assistant-block__title">生成结果</div>
+            <button className="ghost-button" onClick={onGenerate} disabled={isGenerating}>
+              {isGenerating ? '生成中...' : '生成草稿'}
+            </button>
           </div>
-          <button className="secondary-action" onClick={onNextStep} disabled={isGenerating}>
-            {isLastStep ? '完成提问' : '下一题'}
-          </button>
-        </div>
-      </div>
-
-      <div className="assistant-card">
-        <div className="assistant-card__header stacked">
-          <div>
-            <strong>生成结果</strong>
-            <span>确认内容顺序和语气没问题后，再插入到左侧编辑器。</span>
+          <DraftPreview draft={draft} />
+          <div className="assistant-actions">
+            <button className="primary-action" onClick={onApply} disabled={isGenerating}>
+              插入到编辑器
+            </button>
+            <button className="secondary-action" onClick={onReplace} disabled={isGenerating}>
+              替换编辑器
+            </button>
+            <button className="secondary-action" onClick={onCopy} disabled={isGenerating}>
+              复制结果
+            </button>
           </div>
         </div>
-
-        <DraftPreview draft={draft} />
-
-        <div className="assistant-actions">
-          <button className="primary-action" onClick={onApply} disabled={isGenerating}>
-            插入到编辑器
-          </button>
-          <button className="secondary-action" onClick={onReplace} disabled={isGenerating}>
-            替换编辑器内容
-          </button>
-          <button className="secondary-action" onClick={onCopy} disabled={isGenerating}>
-            复制结果
-          </button>
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 
 function App() {
   const [seed, setSeed] = useState(1)
   const [currentStep, setCurrentStep] = useState(0)
+  const [drawerOpen, setDrawerOpen] = useState(true)
   const [value, setValue] = useState<Value>([
-    paragraph('这里是插件详情编辑区。你可以直接编写内容，也可以使用右侧 AI 助手辅助生成。'),
+    paragraph('这里是插件详情编辑区。你可以直接编写内容，也可以使用 AI 助手辅助生成。'),
   ])
   const [answers, setAnswers] = useState<AssistantAnswers>(defaultAnswers)
   const [draft, setDraft] = useState<Value>(() => buildDraft(defaultAnswers))
@@ -591,6 +625,7 @@ function App() {
     setCurrentStep(assistantPrompts.length - 1)
     setStatusLabel(`已套用范例：${example.title}`)
     setErrorMessage(null)
+    setDrawerOpen(true)
   }
 
   const generateDraft = async () => {
@@ -626,11 +661,13 @@ function App() {
   const insertDraft = () => {
     setValue((current) => appendDraft(current, draft))
     setSeed((current) => current + 1)
+    setDrawerOpen(false)
   }
 
   const replaceWithDraft = () => {
     setValue(copyValue(draft))
     setSeed((current) => current + 1)
+    setDrawerOpen(false)
   }
 
   const copyDraft = async () => {
@@ -643,59 +680,139 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div>
-          <div className="app-badge">插件详情编辑</div>
-          <h1>在富文本编辑器里，用 AI 助手共同制作详情页</h1>
-          <p>
-            更贴近真实后台场景：左侧是原有的详情富文本编辑器，右侧是 AI 助手，通过几轮引导帮 ISV
-            先把详情内容讲清楚，然后插入或复制到编辑器中。
-          </p>
+    <div className="sim-page">
+      <header className="sim-topbar">
+        <div className="sim-topbar__left">
+          <div className="brand-square">M</div>
+          <div className="sim-topbar__title">0402</div>
+          <div className="status-chip">企业</div>
+        </div>
+        <div className="sim-topbar__right">
+          <div className="notice-chip">修改需要插件版本发布生效，请前往插件发布创建版本</div>
+          <div className="avatar-chip">PM</div>
         </div>
       </header>
 
-      <main className="editor-page">
-        <section className="product-card">
-          <div className="form-grid">
-            <div className="field-group">
-              <label>插件名称</label>
-              <input value="0402" readOnly />
-            </div>
-            <div className="field-group">
-              <label>插件短描述</label>
-              <input value="AI 协助生成更自然的插件详情内容" readOnly />
-            </div>
+      <div className="sim-layout">
+        <aside className="sim-sidebar">
+          <div className="sim-nav-group">
+            <div className="sim-nav-title">基本信息</div>
+            <div className="sim-nav-item active">基本信息</div>
+            <div className="sim-nav-item">开发</div>
+            <div className="sim-nav-item">插件功能</div>
+            <div className="sim-nav-item">权限管理</div>
           </div>
+          <div className="sim-nav-group">
+            <div className="sim-nav-title">发布</div>
+            <div className="sim-nav-item">插件发布</div>
+            <div className="sim-nav-item">付费管理</div>
+          </div>
+          <div className="sim-nav-group">
+            <div className="sim-nav-title">数据</div>
+            <div className="sim-nav-item">安装统计</div>
+            <div className="sim-nav-item">日志检索</div>
+          </div>
+        </aside>
 
-          <div className="editor-card">
-            <div className="editor-card__header">
+        <main className="sim-content">
+          <section className="sim-card compact">
+            <div className="sim-card__title">插件凭证</div>
+            <div className="credential-row">
+              <div>Plugin ID</div>
+              <div>MiL69CDF1A6EB400CC0</div>
+              <div>Plugin Secret</div>
+              <div>**********************</div>
+            </div>
+          </section>
+
+          <section className="sim-card">
+            <div className="sim-card__header">
               <div>
-                <strong>插件详情</strong>
-                <span>这里继续人工微调，或者直接接收 AI 生成结果。</span>
+                <div className="sim-card__title">基础信息</div>
+                <div className="sim-card__meta">基本信息（中文）</div>
+              </div>
+              <div className="sim-card__tools">
+                <span>国际化配置</span>
+                <span>预览</span>
               </div>
             </div>
-            <EditorCanvas key={seed} initialValue={value} onChange={setValue} />
-          </div>
-        </section>
 
-        <AssistantPanel
-          answers={answers}
-          currentStep={currentStep}
-          errorMessage={errorMessage}
-          draft={draft}
-          isGenerating={isGenerating}
-          onApply={insertDraft}
-          onChangeAnswer={updateAnswer}
-          onCopy={copyDraft}
-          onGenerate={generateDraft}
-          onNextStep={nextStep}
-          onPrevStep={prevStep}
-          onReplace={replaceWithDraft}
-          onUseExample={useExample}
-          statusLabel={statusLabel}
-        />
-      </main>
+            <div className="sim-form">
+              <div className="sim-row">
+                <label>图标</label>
+                <div className="logo-box">+</div>
+                <div className="field-tip">支持 svg、png、jpeg 格式；大小不超过 2 MB；建议尺寸 240*240 px</div>
+              </div>
+
+              <div className="sim-row">
+                <label>插件名称</label>
+                <input className="sim-input" value="0402" readOnly />
+              </div>
+
+              <div className="sim-row">
+                <label>插件短描述</label>
+                <input className="sim-input" value="AI 协助生成更自然的插件详情内容" readOnly />
+              </div>
+
+              <div className="sim-row">
+                <label>插件分类</label>
+                <div className="sim-select">最多可选 3 个插件分类</div>
+              </div>
+
+              <div className="sim-row editor-row">
+                <label>插件详情</label>
+                <div className="editor-field">
+                  <div className="editor-hint-row">
+                    <span>通过 AI 助手辅助整理文案，再插入到富文本中</span>
+                    <button className="inline-ai-entry" type="button" onClick={() => setDrawerOpen(true)}>
+                      <AiSparkIcon />
+                      AI 助手
+                    </button>
+                  </div>
+                  <div className="editor-card embedded">
+                    <EditorCanvas
+                      key={seed}
+                      initialValue={value}
+                      onChange={setValue}
+                      onOpenAi={() => setDrawerOpen(true)}
+                    />
+                  </div>
+                  <div className="field-error">此项为必填项</div>
+                </div>
+              </div>
+
+              <div className="sim-row">
+                <label>封面图</label>
+                <div className="upload-box">点击上传或拖拽文件到该区域</div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <button className="floating-ai-button" type="button" onClick={() => setDrawerOpen(true)}>
+        <AiSparkIcon />
+        帮写
+      </button>
+
+      <AssistantDrawer
+        answers={answers}
+        currentStep={currentStep}
+        errorMessage={errorMessage}
+        draft={draft}
+        isGenerating={isGenerating}
+        isOpen={drawerOpen}
+        onApply={insertDraft}
+        onChangeAnswer={updateAnswer}
+        onClose={() => setDrawerOpen(false)}
+        onCopy={copyDraft}
+        onGenerate={generateDraft}
+        onNextStep={nextStep}
+        onPrevStep={prevStep}
+        onReplace={replaceWithDraft}
+        onUseExample={useExample}
+        statusLabel={statusLabel}
+      />
     </div>
   )
 }

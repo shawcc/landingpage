@@ -29,6 +29,13 @@ type TemplateCard = {
   template: TemplateName
 }
 
+type BlockDefinition = {
+  description: string
+  fields: string
+  name: string
+  type: string
+}
+
 const customBlockTypes = new Set([
   'hero',
   'landing-section',
@@ -60,6 +67,52 @@ const templateCards: TemplateCard[] = [
     label: '运营效率型',
     description: '适合自动化、流程、数据与履约类插件',
   },
+]
+
+const blockDefinitions: BlockDefinition[] = [
+  {
+    type: 'hero',
+    name: '首屏 Hero',
+    fields: '标签、标题、描述、主按钮',
+    description: '负责第一屏价值表达，解决“是什么、适合谁、下一步点哪里”。',
+  },
+  {
+    type: 'landing-section',
+    name: '标准分区',
+    fields: '区块标题、区块说明、子区块',
+    description: '作为详情页的基础骨架，统一承载卖点、场景、收益等内容。',
+  },
+  {
+    type: 'feature-grid',
+    name: '卖点 / 场景卡片',
+    fields: '卡片标题、卡片描述',
+    description: '把一堆段落变成更有节奏的卡片信息，提高可读性。',
+  },
+  {
+    type: 'metric-grid',
+    name: '收益 / 信任区块',
+    fields: '收益项、说明文案',
+    description: '适合表达结果、价值和可信信息，减少“只有功能没有价值”的问题。',
+  },
+  {
+    type: 'faq-group',
+    name: 'FAQ',
+    fields: '问题、回答',
+    description: '帮助 ISV 自动补齐客户购买前最关心的问题。',
+  },
+  {
+    type: 'cta-block',
+    name: 'CTA',
+    fields: '标题、说明、动作按钮',
+    description: '统一做详情页收口，避免页面写完却没有明确转化动作。',
+  },
+]
+
+const designPrinciples = [
+  '不要让 ISV 从空白编辑器开始写，而是先给结构。',
+  '内容可以编辑，但样式必须收口，避免页面越改越丑。',
+  '平台统一控制主题和区块样式，前台渲染和编辑态保持一致。',
+  'AI 先生成首稿，再让用户微调，不要求用户具备设计能力。',
 ]
 
 function text(textValue: string, marks: Record<string, boolean> = {}) {
@@ -444,6 +497,211 @@ function ensureCta(value: Value): Value {
   return next
 }
 
+function ensureHero(value: Value): Value {
+  if (hasType(value as any[], 'hero')) return value
+  const next = copyValue(value)
+  next.unshift(
+    heroBlock(
+      'AI 补齐的首屏',
+      '让商品第一页就像一个真正的详情页，而不是一篇说明文档',
+      '平台统一提供首屏结构，用户只需要编辑产品价值、适用对象和动作按钮，不再自己拼排版。',
+      '建议按钮：立即咨询 / 申请试用'
+    ) as any
+  )
+  return next
+}
+
+function appendSellingPointsBlock(value: Value): Value {
+  const next = copyValue(value)
+  next.push(
+    sectionBlock('新增卖点区块', '适合快速补一段更像商品页的核心亮点展示。', [
+      featureGrid([
+        {
+          title: '结构先于内容',
+          description: '先把卖点装进卡片，再允许用户编辑文字，结果会更稳定。',
+        },
+        {
+          title: '版式统一托底',
+          description: '无论谁来编辑，最终都是同一套卡片样式，不容易失控。',
+        },
+        {
+          title: '更适合平台审核',
+          description: '结构清晰、模块固定，也更利于后续审核与质量控制。',
+        },
+      ]),
+    ]) as any
+  )
+  return next
+}
+
+function appendScenarioBlock(value: Value): Value {
+  const next = copyValue(value)
+  next.push(
+    sectionBlock('新增场景区块', '适合告诉用户：什么场景下最值得使用这个插件。', [
+      featureGrid([
+        {
+          title: '售前咨询高峰',
+          description: '强调插件如何快速承接高频问题，减轻人工压力。',
+        },
+        {
+          title: '夜间无人值守',
+          description: '强调插件如何在非工作时段持续承接需求和线索。',
+        },
+        {
+          title: '新功能推广阶段',
+          description: '强调详情页如何把新能力讲清楚，帮助用户更快理解价值。',
+        },
+      ]),
+    ]) as any
+  )
+  return next
+}
+
+function getNodeText(node: any): string {
+  if (!node) return ''
+  if (Text.isText(node)) return node.text
+  if (Array.isArray(node.children)) return node.children.map(getNodeText).join('')
+  return ''
+}
+
+function PreviewBlock({ node }: { node: any }) {
+  if (!node || Text.isText(node)) return null
+
+  if (node.type === 'hero') {
+    return (
+      <section className="lp-hero">
+        <div className="lp-hero__content">
+          <p className="lp-p">{getNodeText(node.children?.[0])}</p>
+          <h1 className="lp-h1">{getNodeText(node.children?.[1])}</h1>
+          <p className="lp-p">{getNodeText(node.children?.[2])}</p>
+          <p className="lp-p">{getNodeText(node.children?.[3])}</p>
+        </div>
+        <div className="lp-hero__preview">
+          <div className="lp-hero__window">
+            <div className="lp-hero__bar">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="lp-hero__screen">
+              <div className="lp-hero__screen-title" />
+              <div className="lp-hero__screen-line" />
+              <div className="lp-hero__screen-line short" />
+              <div className="lp-hero__screen-cards">
+                <div />
+                <div />
+                <div />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (node.type === 'landing-section') {
+    return (
+      <section className="lp-section">
+        <h2 className="lp-h2">{getNodeText(node.children?.[0])}</h2>
+        <p className="lp-p">{getNodeText(node.children?.[1])}</p>
+        {node.children?.slice(2).map((child: any, index: number) => (
+          <PreviewBlock key={`${node.type}-${index}`} node={child} />
+        ))}
+      </section>
+    )
+  }
+
+  if (node.type === 'feature-grid') {
+    return (
+      <div className="lp-feature-grid">
+        {node.children?.map((child: any, index: number) => (
+          <PreviewBlock key={`${node.type}-${index}`} node={child} />
+        ))}
+      </div>
+    )
+  }
+
+  if (node.type === 'feature-card') {
+    return (
+      <article className="lp-feature-card">
+        <h3 className="lp-h3">{getNodeText(node.children?.[0])}</h3>
+        <p className="lp-p">{getNodeText(node.children?.[1])}</p>
+      </article>
+    )
+  }
+
+  if (node.type === 'metric-grid') {
+    return (
+      <div className="lp-metric-grid">
+        {node.children?.map((child: any, index: number) => (
+          <PreviewBlock key={`${node.type}-${index}`} node={child} />
+        ))}
+      </div>
+    )
+  }
+
+  if (node.type === 'metric-card') {
+    return (
+      <article className="lp-metric-card">
+        <h3 className="lp-h3">{getNodeText(node.children?.[0])}</h3>
+        <p className="lp-p">{getNodeText(node.children?.[1])}</p>
+      </article>
+    )
+  }
+
+  if (node.type === 'faq-group') {
+    return (
+      <div className="lp-faq-group">
+        {node.children?.map((child: any, index: number) => (
+          <PreviewBlock key={`${node.type}-${index}`} node={child} />
+        ))}
+      </div>
+    )
+  }
+
+  if (node.type === 'faq-item') {
+    return (
+      <article className="lp-faq-item">
+        <div className="lp-faq-item__badge">Q</div>
+        <div className="lp-faq-item__body">
+          <h3 className="lp-h3">{getNodeText(node.children?.[0])}</h3>
+          <p className="lp-p">{getNodeText(node.children?.[1])}</p>
+        </div>
+      </article>
+    )
+  }
+
+  if (node.type === 'cta-block') {
+    return (
+      <section className="lp-cta">
+        <h2 className="lp-h2">{getNodeText(node.children?.[0])}</h2>
+        <p className="lp-p">{getNodeText(node.children?.[1])}</p>
+        <p className="lp-p">{getNodeText(node.children?.[2])}</p>
+      </section>
+    )
+  }
+
+  return null
+}
+
+function LandingPreview({ value, theme }: { value: Value; theme: ThemeName }) {
+  return (
+    <div className="preview-frame">
+      <div className="preview-header">
+        <strong>前台统一渲染预览</strong>
+        <span>编辑器只负责内容输入，最终页面由平台统一主题渲染</span>
+      </div>
+      <div className="canvas-shell preview-canvas" data-theme={theme}>
+        <div className="preview-scroll">
+          {value.map((node: any, index) => (
+            <PreviewBlock key={`preview-${index}`} node={node} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function createOutline(nodes: Value) {
   return nodes
     .map((node: any, index) => `${String(index + 1).padStart(2, '0')} · ${node.type}`)
@@ -730,6 +988,9 @@ function App() {
   const insertTrust = () => applyDraft(addTrustSection(value))
   const insertValueSection = () => applyDraft(addValueSection(value))
   const insertCta = () => applyDraft(ensureCta(value))
+  const insertHero = () => applyDraft(ensureHero(value))
+  const insertSellingPoints = () => applyDraft(appendSellingPointsBlock(value))
+  const insertScenario = () => applyDraft(appendScenarioBlock(value))
 
   return (
     <div className="app-shell">
@@ -801,10 +1062,22 @@ function App() {
           <section className="panel-card">
             <div className="panel-title">AI 辅助动作</div>
             <div className="action-list">
+              <button onClick={insertHero}>AI 补齐首屏 Hero</button>
               <button onClick={insertValueSection}>AI 强化卖点结构</button>
               <button onClick={insertTrust}>AI 补齐信任信息</button>
               <button onClick={insertFaq}>AI 自动补齐 FAQ</button>
               <button onClick={insertCta}>AI 自动补齐 CTA</button>
+            </div>
+          </section>
+
+          <section className="panel-card">
+            <div className="panel-title">区块库</div>
+            <div className="panel-subtitle">不要让 ISV 写空白文档，而是插入标准化详情页区块</div>
+            <div className="action-list">
+              <button onClick={insertSellingPoints}>插入卖点区块</button>
+              <button onClick={insertScenario}>插入场景区块</button>
+              <button onClick={insertFaq}>插入 FAQ 区块</button>
+              <button onClick={insertCta}>插入 CTA 区块</button>
             </div>
           </section>
 
@@ -824,6 +1097,20 @@ function App() {
         </aside>
 
         <section className="center-panel">
+          <section className="panel-card">
+            <div className="panel-title">本次改造设计</div>
+            <div className="panel-subtitle">
+              这次不是升级成“更强富文本”，而是把它改造成“商品详情页区块编辑器”。
+            </div>
+            <div className="design-grid">
+              {designPrinciples.map((item) => (
+                <div key={item} className="design-card">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </section>
+
           <div className="center-caption">
             <div>
               <strong>编辑画布</strong>
@@ -841,6 +1128,22 @@ function App() {
         </section>
 
         <aside className="side-panel">
+          <LandingPreview value={value} theme={theme} />
+
+          <section className="panel-card">
+            <div className="panel-title">区块 Schema</div>
+            <div className="panel-subtitle">定义好区块类型，平台才能统一渲染并持续优化样式。</div>
+            <div className="schema-list">
+              {blockDefinitions.map((item) => (
+                <div key={item.type} className="schema-item">
+                  <strong>{item.name}</strong>
+                  <span>{item.description}</span>
+                  <code>{item.fields}</code>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section className="panel-card">
             <div className="panel-title">平台存储建议</div>
             <div className="panel-subtitle">

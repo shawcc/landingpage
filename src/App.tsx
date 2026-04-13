@@ -27,6 +27,14 @@ type AssistantAnswers = {
   tone: string
 }
 
+type DraftPayload = {
+  intro: string
+  sections: Array<{
+    paragraphs: string[]
+    title: string
+  }>
+}
+
 const assistantPrompts = [
   {
     key: 'problem',
@@ -107,6 +115,34 @@ function serializeValueToText(value: Value) {
     .join('\n\n')
 }
 
+function escapeHtml(content: string) {
+  return content
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function serializeValueToHtml(value: Value) {
+  return value
+    .map((node: any) => {
+      if (!node) return ''
+      if (node.type === 'detail-section') {
+        const [titleNode, ...paragraphNodes] = node.children ?? []
+        const title = `<h2>${escapeHtml(getNodeText(titleNode))}</h2>`
+        const paragraphs = paragraphNodes
+          .map((child: any) => `<p>${escapeHtml(getNodeText(child))}</p>`)
+          .join('')
+        return `${title}${paragraphs}`
+      }
+
+      return `<p>${escapeHtml(getNodeText(node))}</p>`
+    })
+    .filter(Boolean)
+    .join('')
+}
+
 function appendDraft(base: Value, draft: Value): Value {
   return [...copyValue(base), ...copyValue(draft)]
 }
@@ -149,6 +185,28 @@ function buildDraft(answers: AssistantAnswers): Value {
   ]
 }
 
+function draftPayloadToValue(payload: DraftPayload): Value {
+  const sections = Array.isArray(payload.sections) ? payload.sections : []
+  const result: Value = []
+
+  if (payload.intro?.trim()) {
+    result.push(paragraph(payload.intro.trim()))
+  }
+
+  sections.forEach((section) => {
+    const title = section.title?.trim()
+    const paragraphs = Array.isArray(section.paragraphs)
+      ? section.paragraphs.map((item) => item.trim()).filter(Boolean)
+      : []
+
+    if (title && paragraphs.length) {
+      result.push(detailSection(title, paragraphs))
+    }
+  })
+
+  return result.length ? result : buildDraft(defaultAnswers)
+}
+
 function getNodeText(node: any): string {
   if (!node) return ''
   if (Text.isText(node)) return node.text
@@ -156,10 +214,22 @@ function getNodeText(node: any): string {
   return ''
 }
 
-function copyToClipboard(content: string) {
-  if (navigator.clipboard) {
-    void navigator.clipboard.writeText(content)
+async function copyDraftToClipboard(value: Value) {
+  const plainText = serializeValueToText(value)
+  const htmlText = serializeValueToHtml(value)
+
+  if (!navigator.clipboard) return
+
+  if ('ClipboardItem' in window) {
+    const item = new ClipboardItem({
+      'text/plain': new Blob([plainText], { type: 'text/plain' }),
+      'text/html': new Blob([htmlText], { type: 'text/html' }),
+    })
+    await navigator.clipboard.write([item])
+    return
   }
+
+  await navigator.clipboard.writeText(plainText)
 }
 
 function ParagraphElement(props: PlateElementProps) {
@@ -317,20 +387,26 @@ function DraftPreview({ draft }: { draft: Value }) {
 
 function AssistantPanel({
   answers,
+  errorMessage,
   draft,
+  isGenerating,
   onApply,
   onChangeAnswer,
   onCopy,
   onGenerate,
   onReplace,
+  statusLabel,
 }: {
   answers: AssistantAnswers
+  errorMessage: string | null
   draft: Value
+  isGenerating: boolean
   onApply: () => void
   onChangeAnswer: (key: keyof AssistantAnswers, value: string) => void
   onCopy: () => void
   onGenerate: () => void
   onReplace: () => void
+  statusLabel: string
 }) {
   return (
     <aside className="assistant-panel">
@@ -340,9 +416,14 @@ function AssistantPanel({
             <strong>AI 助手</strong>
             <span>通过引导式交流，先把详情内容梳理出来。</span>
           </div>
-          <button className="ghost-button" onClick={onGenerate}>
-            生成草稿
+          <button className="ghost-button" onClick={onGenerate} disabled={isGenerating}>
+            {isGenerating ? '生成中...' : '生成草稿'}
           </button>
+        </div>
+
+        <div className="assistant-status-row">
+          <span className="assistant-status">{statusLabel}</span>
+          {errorMessage ? <span className="assistant-error">{errorMessage}</span> : null}
         </div>
 
         <div className="conversation-list">
@@ -353,6 +434,7 @@ function AssistantPanel({
               </div>
               <textarea
                 className="assistant-input"
+                disabled={isGenerating}
                 value={answers[item.key]}
                 placeholder={item.placeholder}
                 onChange={(event) =>
@@ -375,13 +457,13 @@ function AssistantPanel({
         <DraftPreview draft={draft} />
 
         <div className="assistant-actions">
-          <button className="primary-action" onClick={onApply}>
+          <button className="primary-action" onClick={onApply} disabled={isGenerating}>
             插入到编辑器
           </button>
-          <button className="secondary-action" onClick={onReplace}>
+          <button className="secondary-action" onClick={onReplace} disabled={isGenerating}>
             替换编辑器内容
           </button>
-          <button className="secondary-action" onClick={onCopy}>
+          <button className="secondary-action" onClick={onCopy} disabled={isGenerating}>
             复制结果
           </button>
         </div>
@@ -397,13 +479,42 @@ function App() {
   ])
   const [answers, setAnswers] = useState<AssistantAnswers>(defaultAnswers)
   const [draft, setDraft] = useState<Value>(() => buildDraft(defaultAnswers))
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [statusLabel, setStatusLabel] = useState('当前使用本地草稿生成逻辑')
 
   const updateAnswer = (key: keyof AssistantAnswers, nextValue: string) => {
     setAnswers((current) => ({ ...current, [key]: nextValue }))
   }
 
-  const generateDraft = () => {
-    setDraft(buildDraft(answers))
+  const generateDraft = async () => {
+    setIsGenerating(true)
+    setErrorMessage(null)
+
+    try {
+      const response = await fetch('/api/generate-detail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers }),
+      })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error || 'AI 服务暂时不可用')
+      }
+
+      const payload = (await response.json()) as { draft: DraftPayload; model?: string }
+      setDraft(draftPayloadToValue(payload.draft))
+      setStatusLabel(payload.model ? `已使用 AI 模型：${payload.model}` : '已使用 AI 生成草稿')
+    } catch (error) {
+      setDraft(buildDraft(answers))
+      setStatusLabel('未命中 AI 服务，已回退到本地草稿')
+      setErrorMessage(error instanceof Error ? error.message : 'AI 服务调用失败')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const insertDraft = () => {
@@ -416,8 +527,13 @@ function App() {
     setSeed((current) => current + 1)
   }
 
-  const copyDraft = () => {
-    copyToClipboard(serializeValueToText(draft))
+  const copyDraft = async () => {
+    try {
+      await copyDraftToClipboard(draft)
+      setErrorMessage(null)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '复制失败')
+    }
   }
 
   return (
@@ -459,12 +575,15 @@ function App() {
 
         <AssistantPanel
           answers={answers}
+          errorMessage={errorMessage}
           draft={draft}
+          isGenerating={isGenerating}
           onApply={insertDraft}
           onChangeAnswer={updateAnswer}
           onCopy={copyDraft}
           onGenerate={generateDraft}
           onReplace={replaceWithDraft}
+          statusLabel={statusLabel}
         />
       </main>
     </div>

@@ -52,67 +52,67 @@ const templateCards: TemplateCard[] = [
   {
     template: 'service',
     theme: 'tech',
-    label: '客服增长型',
-    description: '适合客服、接待、咨询转化类插件',
+    label: '服务说明型',
+    description: '适合客服、协同、流程类插件的平静叙事表达',
   },
   {
     template: 'growth',
     theme: 'contrast',
-    label: '营销转化型',
-    description: '适合营销活动、投放、促销增长类插件',
+    label: '价值介绍型',
+    description: '适合把产品价值、适用对象、使用方式讲清楚',
   },
   {
     template: 'ops',
     theme: 'calm',
-    label: '运营效率型',
-    description: '适合自动化、流程、数据与履约类插件',
+    label: '能力说明型',
+    description: '适合后台工具、数据工具、运营能力介绍',
   },
 ]
 
 const blockDefinitions: BlockDefinition[] = [
   {
     type: 'hero',
-    name: '首屏 Hero',
-    fields: '标签、标题、描述、主按钮',
-    description: '负责第一屏价值表达，解决“是什么、适合谁、下一步点哪里”。',
+    name: '开篇引子',
+    fields: '标签、标题、简介、动作',
+    description: '用于安静地交代产品是什么、解决什么问题，不做强营销首屏。',
   },
   {
     type: 'landing-section',
-    name: '标准分区',
+    name: '章节分区',
     fields: '区块标题、区块说明、子区块',
-    description: '作为详情页的基础骨架，统一承载卖点、场景、收益等内容。',
+    description: '把详情内容拆成几段易读的章节，更像在讲一个完整故事。',
   },
   {
     type: 'feature-grid',
-    name: '卖点 / 场景卡片',
+    name: '要点分组',
     fields: '卡片标题、卡片描述',
-    description: '把一堆段落变成更有节奏的卡片信息，提高可读性。',
+    description: '用于讲重点信息，但视觉上保持克制，不过度营销。',
   },
   {
     type: 'metric-grid',
-    name: '收益 / 信任区块',
+    name: '补充说明',
     fields: '收益项、说明文案',
-    description: '适合表达结果、价值和可信信息，减少“只有功能没有价值”的问题。',
+    description: '适合承载价值说明、适用边界、可信信息与补充解释。',
   },
   {
     type: 'faq-group',
     name: 'FAQ',
     fields: '问题、回答',
-    description: '帮助 ISV 自动补齐客户购买前最关心的问题。',
+    description: '把用户自然会问的问题安静补齐，而不是硬塞营销话术。',
   },
   {
     type: 'cta-block',
-    name: 'CTA',
+    name: '结尾收口',
     fields: '标题、说明、动作按钮',
-    description: '统一做详情页收口，避免页面写完却没有明确转化动作。',
+    description: '保留一个自然收尾，不喧宾夺主，也避免没有下一步。',
   },
 ]
 
 const designPrinciples = [
-  '不要让 ISV 从空白编辑器开始写，而是先给结构。',
-  '内容可以编辑，但样式必须收口，避免页面越改越丑。',
-  '平台统一控制主题和区块样式，前台渲染和编辑态保持一致。',
-  'AI 先生成首稿，再让用户微调，不要求用户具备设计能力。',
+  '不要做成独立站，而要像平台内容区里自然长出来的一段商品介绍。',
+  '不要过度强调视觉冲击，而要强调阅读节奏、层次和讲故事能力。',
+  '内容可以编辑，但样式必须收口，保证贴进平台后不突兀。',
+  'AI 先补齐结构和表达，再让用户微调，不要求用户具备设计能力。',
 ]
 
 function text(textValue: string, marks: Record<string, boolean> = {}) {
@@ -201,53 +201,53 @@ function createTemplate(template: TemplateName): Value {
     return [
       heroBlock(
         '适合营销增长与活动工具',
-        '把活动卖点讲清楚，把转化动作放在最顺手的位置',
-        '这套详情页模板强调“活动效果、转化收益、行动召唤”，适合营销插件、优惠工具和增长组件。',
-        '主按钮建议：立即创建活动 / 领取演示方案'
+        '把产品价值讲清楚，让用户在阅读过程中自然理解它的作用',
+        '这套内容结构适合把产品价值、适用对象和使用方式解释清楚，而不是做一个非常强势的营销页。',
+        '建议动作：查看演示 / 了解方案'
       ),
       sectionBlock(
-        '用户为什么会被打动',
-        'AI 不只罗列功能，而是把复杂能力翻译成客户更容易感知的增长结果。',
+        '先把价值讲清楚',
+        '这部分不追求夸张表达，而是用更平实的方式说明产品为什么值得了解。',
         [
           featureGrid([
             {
-              title: '活动价值先讲结果',
-              description: '先强调报名率、转化率、复购机会，再解释功能细节。',
+              title: '先讲它解决什么问题',
+              description: '在介绍具体能力前，先说明它帮助用户减少了什么麻烦。',
             },
             {
-              title: '促销信息层级更清晰',
-              description: '优惠规则、场景说明、适用对象分层展示，减少理解成本。',
+              title: '再讲它适合谁',
+              description: '帮助读者判断自己是不是目标用户，而不是被迫读完整页。',
             },
             {
-              title: 'CTA 更像营销页',
-              description: '按钮、强调文案、结尾收口都围绕“立即行动”设计。',
+              title: '最后再讲下一步',
+              description: '把动作放在文末自然收口，不让页面从头到尾都在催促点击。',
             },
           ]),
         ]
       ),
       sectionBlock(
-        '适合放哪些内容',
-        '这类详情页推荐优先展示活动玩法、适用场景、使用收益和客户背书。',
+        '适合放哪些信息',
+        '这类详情页更适合承载背景、能力说明、适用场景与补充解释。',
         [
           metricGrid([
             {
-              title: '活动玩法',
-              description: '满减、优惠券、组合购、会员激励等核心玩法说明。',
+              title: '能力说明',
+              description: '产品到底做什么，建议用 2 到 3 个自然段讲清楚。',
             },
             {
               title: '适用场景',
-              description: '大促、新客拉新、节日营销、老客复购等典型场景。',
+              description: '在什么业务场景下更适合用它，帮助用户判断适配度。',
             },
             {
-              title: '预期收益',
-              description: '从转化提升、客单增长、活动效率三个角度表达价值。',
+              title: '使用结果',
+              description: '结果可以讲，但不要写成夸张宣传，更像可信说明。',
             },
           ]),
         ]
       ),
       sectionBlock(
-        '常见顾虑',
-        '这一段帮助 ISV 提前回答客户在购买前最常见的问题。',
+        '补充说明',
+        '这一段帮助 ISV 提前回答用户阅读到这里时最自然会问的问题。',
         [
           faqGroup([
             {
@@ -262,9 +262,9 @@ function createTemplate(template: TemplateName): Value {
         ]
       ),
       ctaBlock(
-        '让详情页更像一个能转化的商品页',
-        '先让 AI 生成活动型首稿，再由运营微调卖点和图片，就能在平台里快速形成统一的营销详情页。',
-        '建议按钮：立即咨询 / 获取方案 / 申请体验'
+        '让详情区看起来更像产品说明，而不是独立站',
+        '先让 AI 生成一版结构清晰的说明内容，再由运营微调重点和图片，就能更自然地嵌入平台。',
+        '建议动作：继续了解 / 联系咨询'
       ),
     ]
   }
@@ -273,9 +273,9 @@ function createTemplate(template: TemplateName): Value {
     return [
       heroBlock(
         '适合运营效率与流程自动化工具',
-        '把复杂流程能力转成清晰、可信、可落地的详情页表达',
-        '这套模板更偏稳重和专业，适合数据工具、履约工具、流程自动化插件和运营后台能力。',
-        '主按钮建议：预约演示 / 联系方案顾问'
+        '把复杂流程能力转成清晰、可信、可理解的内容表达',
+        '这套模板更偏克制和专业，适合后台工具、数据工具、自动化能力说明。',
+        '建议动作：了解方案 / 查看演示'
       ),
       sectionBlock(
         '这类工具最该讲什么',
@@ -328,53 +328,53 @@ function createTemplate(template: TemplateName): Value {
   return [
     heroBlock(
       '适合客服、问答与服务类插件',
-      '用户不会表达也没关系，先让 AI 帮你写出一版像样的商品详情页',
-      '这套模板突出“问题被解决了什么、效率提升在哪里、客户为什么要立即了解”，适合客服、AI 助手和服务型插件。',
-      '主按钮建议：立即咨询 / 申请试用'
+      '用户不会表达也没关系，先让 AI 帮你整理出一版自然、顺畅的商品介绍内容',
+      '这套模板更像一段被好好整理过的产品说明，适合嵌在平台详情区，而不是单独做成一个抢眼的独立页。',
+      '建议动作：查看能力说明 / 了解使用方式'
     ),
     sectionBlock(
-      '为什么这个编辑器更适合商品详情页',
-      '它不是空白富文本，而是平台控制样式、用户编辑内容、AI 帮忙生成表达的半结构化编辑器。',
+      '为什么这种编辑方式更适合平台详情区',
+      '它不是空白富文本，也不是强视觉 landing page，而是平台控制样式、用户编辑内容、AI 帮忙补齐表达的半结构化编辑器。',
       [
         featureGrid([
           {
-            title: '预制区块先给结构',
-            description: '首屏、卖点、场景、FAQ、CTA 都是现成区块，用户不再从空白开始。',
+            title: '先给结构，再写内容',
+            description: '开篇、说明、场景、FAQ、结尾都先有位置，用户不再从空白开始。',
           },
           {
-            title: '统一主题先保底好看',
-            description: '样式由平台统一控制，用户只改内容，不容易把页面改丑。',
+            title: '统一样式托底',
+            description: '样式由平台统一控制，用户只改内容，不会和整体站点风格冲突。',
           },
           {
-            title: 'AI 先产出首稿',
-            description: 'AI 根据商品信息补齐内容骨架，先给出可编辑、可发布的第一版。',
+            title: 'AI 先整理首稿',
+            description: 'AI 根据商品信息补齐内容骨架，先给出可编辑、可阅读的第一版。',
           },
         ]),
       ]
     ),
     sectionBlock(
       '推荐表达哪些信息',
-      'ISV 往往知道产品做了什么，但不知道怎么写成详情页。这里的区块就是为了解决这个问题。',
+      'ISV 往往知道产品做了什么，但不知道怎么写得自然、顺畅。这里的区块就是为了解决这个问题。',
       [
         metricGrid([
           {
-            title: '核心卖点',
-            description: '把零散功能归纳成 3 到 4 个客户最容易理解的亮点。',
+            title: '核心要点',
+            description: '把零散功能归纳成几段容易理解的重点信息。',
           },
           {
             title: '使用场景',
-            description: '告诉客户它适合谁、在哪些业务节点最值得使用。',
+            description: '告诉用户它适合谁、在哪些业务节点最有帮助。',
           },
           {
-            title: '预期收益',
-            description: '把技术语言转成结果语言，例如效率提升、响应更快、规则更统一。',
+            title: '使用结果',
+            description: '把技术语言转成更平实的结果表达，例如效率更高、规则更统一。',
           },
         ]),
       ]
     ),
     sectionBlock(
       '常见问题',
-      'FAQ 是详情页里非常容易缺失的一段，但对转化很重要。',
+      'FAQ 是详情页里非常容易缺失的一段，但对理解和消除顾虑很重要。',
       [
         faqGroup([
           {
@@ -389,9 +389,9 @@ function createTemplate(template: TemplateName): Value {
       ]
     ),
     ctaBlock(
-      '把普通富文本升级成商品详情页编辑器',
-      '你们平台负责区块和样式，AI 负责首稿和改写，ISV 只负责补充业务信息，就能在站内做出更好看的详情页。',
-      '建议按钮：立即生成首稿 / 复制平台文档 JSON'
+      '把普通富文本升级成更适合讲故事的详情内容编辑器',
+      '你们平台负责区块和样式，AI 负责首稿和改写，ISV 只负责补充业务信息，就能在站内做出更自然、更统一的详情内容。',
+      '建议动作：继续了解 / 复制平台文档 JSON'
     ),
   ]
 }
@@ -503,9 +503,9 @@ function ensureHero(value: Value): Value {
   next.unshift(
     heroBlock(
       'AI 补齐的首屏',
-      '让商品第一页就像一个真正的详情页，而不是一篇说明文档',
-      '平台统一提供首屏结构，用户只需要编辑产品价值、适用对象和动作按钮，不再自己拼排版。',
-      '建议按钮：立即咨询 / 申请试用'
+      '让内容开头更自然地把产品讲清楚，而不是突兀地做一个大首屏',
+      '平台统一提供开篇结构，用户只需要编辑产品价值、适用对象和动作按钮，不再自己拼排版。',
+      '建议动作：了解更多 / 联系咨询'
     ) as any
   )
   return next
@@ -518,15 +518,15 @@ function appendSellingPointsBlock(value: Value): Value {
       featureGrid([
         {
           title: '结构先于内容',
-          description: '先把卖点装进卡片，再允许用户编辑文字，结果会更稳定。',
+          description: '先把重点放进固定区块，再允许用户编辑文字，结果会更稳定。',
         },
         {
           title: '版式统一托底',
-          description: '无论谁来编辑，最终都是同一套卡片样式，不容易失控。',
+          description: '无论谁来编辑，最终都是同一套克制样式，不容易失控。',
         },
         {
-          title: '更适合平台审核',
-          description: '结构清晰、模块固定，也更利于后续审核与质量控制。',
+          title: '更适合平台上下文',
+          description: '结构清晰、视觉平稳，也更容易融入平台现有页面。',
         },
       ]),
     ]) as any
@@ -537,7 +537,7 @@ function appendSellingPointsBlock(value: Value): Value {
 function appendScenarioBlock(value: Value): Value {
   const next = copyValue(value)
   next.push(
-    sectionBlock('新增场景区块', '适合告诉用户：什么场景下最值得使用这个插件。', [
+    sectionBlock('新增场景区块', '适合告诉用户：什么场景下更适合使用这个插件。', [
       featureGrid([
         {
           title: '售前咨询高峰',
@@ -688,8 +688,8 @@ function LandingPreview({ value, theme }: { value: Value; theme: ThemeName }) {
   return (
     <div className="preview-frame">
       <div className="preview-header">
-        <strong>前台统一渲染预览</strong>
-        <span>编辑器只负责内容输入，最终页面由平台统一主题渲染</span>
+        <strong>平台内嵌效果预览</strong>
+        <span>编辑器只负责内容输入，最终展示应该像平台内容区的一部分，而不是独立站。</span>
       </div>
       <div className="canvas-shell preview-canvas" data-theme={theme}>
         <div className="preview-scroll">
@@ -1062,22 +1062,22 @@ function App() {
           <section className="panel-card">
             <div className="panel-title">AI 辅助动作</div>
             <div className="action-list">
-              <button onClick={insertHero}>AI 补齐首屏 Hero</button>
-              <button onClick={insertValueSection}>AI 强化卖点结构</button>
-              <button onClick={insertTrust}>AI 补齐信任信息</button>
+              <button onClick={insertHero}>AI 补齐开篇引子</button>
+              <button onClick={insertValueSection}>AI 整理重点内容</button>
+              <button onClick={insertTrust}>AI 补齐补充说明</button>
               <button onClick={insertFaq}>AI 自动补齐 FAQ</button>
-              <button onClick={insertCta}>AI 自动补齐 CTA</button>
+              <button onClick={insertCta}>AI 自动补齐结尾收口</button>
             </div>
           </section>
 
           <section className="panel-card">
-            <div className="panel-title">区块库</div>
-            <div className="panel-subtitle">不要让 ISV 写空白文档，而是插入标准化详情页区块</div>
+            <div className="panel-title">叙事区块库</div>
+            <div className="panel-subtitle">不要让 ISV 写空白文档，而是插入标准化、克制的详情内容区块</div>
             <div className="action-list">
-              <button onClick={insertSellingPoints}>插入卖点区块</button>
+              <button onClick={insertSellingPoints}>插入重点区块</button>
               <button onClick={insertScenario}>插入场景区块</button>
               <button onClick={insertFaq}>插入 FAQ 区块</button>
-              <button onClick={insertCta}>插入 CTA 区块</button>
+              <button onClick={insertCta}>插入结尾区块</button>
             </div>
           </section>
 
@@ -1100,7 +1100,7 @@ function App() {
           <section className="panel-card">
             <div className="panel-title">本次改造设计</div>
             <div className="panel-subtitle">
-              这次不是升级成“更强富文本”，而是把它改造成“商品详情页区块编辑器”。
+              这次不是升级成“更强富文本”，而是把它改造成“适合平台内嵌内容的详情区块编辑器”。
             </div>
             <div className="design-grid">
               {designPrinciples.map((item) => (
@@ -1114,7 +1114,7 @@ function App() {
           <div className="center-caption">
             <div>
               <strong>编辑画布</strong>
-              <span>即所得编辑，区块结构和展示样式保持一致</span>
+              <span>即所得编辑，但视觉上保持克制，避免贴进平台后显得突兀</span>
             </div>
             <div className="status-pill">当前主题：{theme}</div>
           </div>
@@ -1132,7 +1132,7 @@ function App() {
 
           <section className="panel-card">
             <div className="panel-title">区块 Schema</div>
-            <div className="panel-subtitle">定义好区块类型，平台才能统一渲染并持续优化样式。</div>
+            <div className="panel-subtitle">定义好区块类型，平台才能统一渲染，并让内容像站内说明区一样自然。</div>
             <div className="schema-list">
               {blockDefinitions.map((item) => (
                 <div key={item.type} className="schema-item">

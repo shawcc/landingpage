@@ -21,6 +21,7 @@ import './App.css'
 
 type ThemeName = 'tech' | 'calm' | 'contrast'
 type TemplateName = 'service' | 'growth' | 'ops'
+type ViewName = 'product' | 'spec'
 
 type TemplateCard = {
   description: string
@@ -113,6 +114,18 @@ const designPrinciples = [
   '不要过度强调视觉冲击，而要强调阅读节奏、层次和讲故事能力。',
   '内容可以编辑，但样式必须收口，保证贴进平台后不突兀。',
   'AI 先补齐结构和表达，再让用户微调，不要求用户具备设计能力。',
+]
+
+const productNarrative = [
+  '它不是一个更花哨的富文本框，而是一个适合站内详情区的内容编辑器。',
+  '用户编辑的是内容结构和表达，平台控制的是样式和阅读节奏。',
+  'AI 的作用不是生成一个独立站，而是帮助 ISV 先整理出清晰的讲述顺序。',
+]
+
+const productGoals = [
+  '让 ISV 不从空白开始写',
+  '让站内详情区看起来统一自然',
+  '让内容像在讲故事，而不是在堆功能点',
 ]
 
 function text(textValue: string, marks: Record<string, boolean> = {}) {
@@ -702,6 +715,213 @@ function LandingPreview({ value, theme }: { value: Value; theme: ThemeName }) {
   )
 }
 
+function ProductWorkspace({
+  insertHero,
+  insertScenario,
+  insertSellingPoints,
+  insertCta,
+  insertFaq,
+  insertTrust,
+  insertValueSection,
+  onChange,
+  outline,
+  payload,
+  seed,
+  setTheme,
+  template,
+  textLength,
+  theme,
+  value,
+  applyDraft,
+}: {
+  insertHero: () => void
+  insertScenario: () => void
+  insertSellingPoints: () => void
+  insertCta: () => void
+  insertFaq: () => void
+  insertTrust: () => void
+  insertValueSection: () => void
+  onChange: (value: Value) => void
+  outline: string
+  payload: string
+  seed: number
+  setTheme: (theme: ThemeName) => void
+  template: TemplateName
+  textLength: number
+  theme: ThemeName
+  value: Value
+  applyDraft: (nextValue: Value, nextTheme?: ThemeName, nextTemplate?: TemplateName) => void
+}) {
+  return (
+    <main className="app-layout product-layout">
+      <aside className="side-panel">
+        <section className="panel-card">
+          <div className="panel-title">模板首稿</div>
+          <div className="panel-subtitle">先选一个更接近业务场景的详情页方向</div>
+          <div className="template-list">
+            {templateCards.map((item) => (
+              <button
+                key={item.template}
+                className={item.template === template ? 'template-card active' : 'template-card'}
+                onClick={() => applyDraft(createTemplate(item.template), item.theme, item.template)}
+              >
+                <strong>{item.label}</strong>
+                <span>{item.description}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel-card">
+          <div className="panel-title">主题风格</div>
+          <div className="theme-switches">
+            <button
+              className={theme === 'tech' ? 'theme-pill active' : 'theme-pill'}
+              onClick={() => setTheme('tech')}
+            >
+              科技专业
+            </button>
+            <button
+              className={theme === 'calm' ? 'theme-pill active' : 'theme-pill'}
+              onClick={() => setTheme('calm')}
+            >
+              简洁商务
+            </button>
+            <button
+              className={theme === 'contrast' ? 'theme-pill active' : 'theme-pill'}
+              onClick={() => setTheme('contrast')}
+            >
+              温和强调
+            </button>
+          </div>
+        </section>
+
+        <section className="panel-card">
+          <div className="panel-title">AI 辅助动作</div>
+          <div className="action-list">
+            <button onClick={insertHero}>AI 补齐开篇引子</button>
+            <button onClick={insertValueSection}>AI 整理重点内容</button>
+            <button onClick={insertTrust}>AI 补齐补充说明</button>
+            <button onClick={insertFaq}>AI 自动补齐 FAQ</button>
+            <button onClick={insertCta}>AI 自动补齐结尾收口</button>
+          </div>
+        </section>
+
+        <section className="panel-card">
+          <div className="panel-title">叙事区块库</div>
+          <div className="panel-subtitle">插入标准化、克制的详情内容区块</div>
+          <div className="action-list">
+            <button onClick={insertSellingPoints}>插入重点区块</button>
+            <button onClick={insertScenario}>插入场景区块</button>
+            <button onClick={insertFaq}>插入 FAQ 区块</button>
+            <button onClick={insertCta}>插入结尾区块</button>
+          </div>
+        </section>
+      </aside>
+
+      <section className="center-panel">
+        <div className="center-caption">
+          <div>
+            <strong>编辑画布</strong>
+            <span>这里只放产品本身，不再混入方案解释</span>
+          </div>
+          <div className="status-pill">当前主题：{theme}</div>
+        </div>
+
+        <EditorCanvas key={seed} initialValue={value} theme={theme} onChange={onChange} />
+      </section>
+
+      <aside className="side-panel">
+        <LandingPreview value={value} theme={theme} />
+
+        <section className="panel-card">
+          <div className="panel-title">当前文档</div>
+          <div className="mini-metrics">
+            <div>
+              <strong>{value.length}</strong>
+              <span>顶层区块</span>
+            </div>
+            <div>
+              <strong>{textLength}</strong>
+              <span>总字数</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel-card">
+          <div className="panel-title">导出结果</div>
+          <div className="panel-subtitle">保留平台最终需要的结构化数据</div>
+          <pre className="outline-box">{outline}</pre>
+          <pre className="payload-box compact">{payload}</pre>
+        </section>
+      </aside>
+    </main>
+  )
+}
+
+function SpecWorkspace({ outline, payload }: { outline: string; payload: string }) {
+  return (
+    <main className="spec-layout">
+      <section className="panel-card spec-hero">
+        <div className="panel-title">产品说明</div>
+        <div className="panel-subtitle">
+          这一页只讲设计思路、区块能力和实现边界，不放实际编辑器交互。
+        </div>
+        <div className="spec-list">
+          {productNarrative.map((item) => (
+            <div key={item} className="spec-list-item">
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="panel-title">产品目标</div>
+        <div className="spec-list">
+          {productGoals.map((item) => (
+            <div key={item} className="spec-list-item">
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="panel-title">设计原则</div>
+        <div className="design-grid">
+          {designPrinciples.map((item) => (
+            <div key={item} className="design-card">
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="panel-title">区块 Schema</div>
+        <div className="panel-subtitle">说明层只讲区块能力，不混入实际产品操作。</div>
+        <div className="schema-list">
+          {blockDefinitions.map((item) => (
+            <div key={item.type} className="schema-item">
+              <strong>{item.name}</strong>
+              <span>{item.description}</span>
+              <code>{item.fields}</code>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="panel-title">平台存储建议</div>
+        <div className="panel-subtitle">编辑器只负责内容输入，平台保存结构化 JSON。</div>
+        <pre className="outline-box">{outline}</pre>
+        <pre className="payload-box">{payload}</pre>
+      </section>
+    </main>
+  )
+}
+
 function createOutline(nodes: Value) {
   return nodes
     .map((node: any, index) => `${String(index + 1).padStart(2, '0')} · ${node.type}`)
@@ -968,6 +1188,7 @@ function EditorCanvas({
 }
 
 function App() {
+  const [activeView, setActiveView] = useState<ViewName>('product')
   const [theme, setTheme] = useState<ThemeName>('tech')
   const [template, setTemplate] = useState<TemplateName>('service')
   const [seed, setSeed] = useState(1)
@@ -996,15 +1217,28 @@ function App() {
     <div className="app-shell">
       <header className="app-header">
         <div>
-          <div className="app-badge">Plate + AI 商品详情页编辑器 Demo</div>
-          <h1>在你们站内，用富文本编辑出更好看的商品详情页</h1>
+          <div className="app-badge">Plate + AI 商品详情内容编辑器</div>
+          <h1>{activeView === 'product' ? '产品本身' : '方案说明'}</h1>
           <p>
-            这版实现把 Plate 当成编辑底座，再叠加结构化区块、统一主题和 AI
-            辅助动作。用户不是从空白编辑器开始写，而是先拿到一版像样的详情页首稿。
+            {activeView === 'product'
+              ? '这里是实际产品界面，只保留编辑、插入区块和预览能力，不再混入设计解释。'
+              : '这里专门讲为什么要这样设计、有哪些区块、平台应该怎么存和渲染。'}
           </p>
         </div>
 
-        <div className="header-actions">
+        <div className="header-actions top-tabs">
+          <button
+            className={activeView === 'product' ? 'primary' : 'secondary'}
+            onClick={() => setActiveView('product')}
+          >
+            产品本身
+          </button>
+          <button
+            className={activeView === 'spec' ? 'primary' : 'secondary'}
+            onClick={() => setActiveView('spec')}
+          >
+            方案说明
+          </button>
           <button className="primary" onClick={() => copyToClipboard(payload)}>
             复制平台 JSON
           </button>
@@ -1014,150 +1248,29 @@ function App() {
         </div>
       </header>
 
-      <main className="app-layout">
-        <aside className="side-panel">
-          <section className="panel-card">
-            <div className="panel-title">模板首稿</div>
-            <div className="panel-subtitle">先选一个更接近业务场景的详情页方向</div>
-            <div className="template-list">
-              {templateCards.map((item) => (
-                <button
-                  key={item.template}
-                  className={item.template === template ? 'template-card active' : 'template-card'}
-                  onClick={() =>
-                    applyDraft(createTemplate(item.template), item.theme, item.template)
-                  }
-                >
-                  <strong>{item.label}</strong>
-                  <span>{item.description}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-title">主题风格</div>
-            <div className="theme-switches">
-              <button
-                className={theme === 'tech' ? 'theme-pill active' : 'theme-pill'}
-                onClick={() => setTheme('tech')}
-              >
-                科技专业
-              </button>
-              <button
-                className={theme === 'calm' ? 'theme-pill active' : 'theme-pill'}
-                onClick={() => setTheme('calm')}
-              >
-                简洁商务
-              </button>
-              <button
-                className={theme === 'contrast' ? 'theme-pill active' : 'theme-pill'}
-                onClick={() => setTheme('contrast')}
-              >
-                增长转化
-              </button>
-            </div>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-title">AI 辅助动作</div>
-            <div className="action-list">
-              <button onClick={insertHero}>AI 补齐开篇引子</button>
-              <button onClick={insertValueSection}>AI 整理重点内容</button>
-              <button onClick={insertTrust}>AI 补齐补充说明</button>
-              <button onClick={insertFaq}>AI 自动补齐 FAQ</button>
-              <button onClick={insertCta}>AI 自动补齐结尾收口</button>
-            </div>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-title">叙事区块库</div>
-            <div className="panel-subtitle">不要让 ISV 写空白文档，而是插入标准化、克制的详情内容区块</div>
-            <div className="action-list">
-              <button onClick={insertSellingPoints}>插入重点区块</button>
-              <button onClick={insertScenario}>插入场景区块</button>
-              <button onClick={insertFaq}>插入 FAQ 区块</button>
-              <button onClick={insertCta}>插入结尾区块</button>
-            </div>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-title">当前文档</div>
-            <div className="mini-metrics">
-              <div>
-                <strong>{value.length}</strong>
-                <span>顶层区块</span>
-              </div>
-              <div>
-                <strong>{textLength}</strong>
-                <span>总字数</span>
-              </div>
-            </div>
-          </section>
-        </aside>
-
-        <section className="center-panel">
-          <section className="panel-card">
-            <div className="panel-title">本次改造设计</div>
-            <div className="panel-subtitle">
-              这次不是升级成“更强富文本”，而是把它改造成“适合平台内嵌内容的详情区块编辑器”。
-            </div>
-            <div className="design-grid">
-              {designPrinciples.map((item) => (
-                <div key={item} className="design-card">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <div className="center-caption">
-            <div>
-              <strong>编辑画布</strong>
-              <span>即所得编辑，但视觉上保持克制，避免贴进平台后显得突兀</span>
-            </div>
-            <div className="status-pill">当前主题：{theme}</div>
-          </div>
-
-          <EditorCanvas
-            key={seed}
-            initialValue={value}
-            theme={theme}
-            onChange={setValue}
-          />
-        </section>
-
-        <aside className="side-panel">
-          <LandingPreview value={value} theme={theme} />
-
-          <section className="panel-card">
-            <div className="panel-title">区块 Schema</div>
-            <div className="panel-subtitle">定义好区块类型，平台才能统一渲染，并让内容像站内说明区一样自然。</div>
-            <div className="schema-list">
-              {blockDefinitions.map((item) => (
-                <div key={item.type} className="schema-item">
-                  <strong>{item.name}</strong>
-                  <span>{item.description}</span>
-                  <code>{item.fields}</code>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-title">平台存储建议</div>
-            <div className="panel-subtitle">
-              推荐把结果保存为 Plate 文档 JSON，再由平台前台统一渲染
-            </div>
-            <pre className="payload-box">{payload}</pre>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-title">区块大纲</div>
-            <pre className="outline-box">{outline}</pre>
-          </section>
-        </aside>
-      </main>
+      {activeView === 'product' ? (
+        <ProductWorkspace
+          insertHero={insertHero}
+          insertScenario={insertScenario}
+          insertSellingPoints={insertSellingPoints}
+          insertCta={insertCta}
+          insertFaq={insertFaq}
+          insertTrust={insertTrust}
+          insertValueSection={insertValueSection}
+          onChange={setValue}
+          outline={outline}
+          payload={payload}
+          seed={seed}
+          setTheme={setTheme}
+          template={template}
+          textLength={textLength}
+          theme={theme}
+          value={value}
+          applyDraft={applyDraft}
+        />
+      ) : (
+        <SpecWorkspace outline={outline} payload={payload} />
+      )}
     </div>
   )
 }

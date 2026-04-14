@@ -1231,26 +1231,17 @@ function App() {
               <div className="sim-row editor-row">
                 <label>插件详情</label>
                 <div className="editor-field">
-                  <div className="template-strip">
-                    <div className="template-strip__header">
-                      <div>
-                        <strong>表达模板</strong>
-                        <span>先定讲法，再继续写详情。</span>
-                      </div>
-                      <span className="template-strip__meta">当前模板：{selectedTemplate.title}</span>
-                    </div>
+                  <div className="template-inline-bar">
+                    <span className="template-inline-label">表达模板</span>
                     <TemplateGallery
                       activeTemplateId={selectedTemplateId}
                       onSelect={applyTemplate}
                       variant="compact"
                     />
-                    <div className="template-brief">
-                      <span>{selectedTemplate.description}</span>
-                      <em>{selectedTemplate.layoutHint}</em>
-                    </div>
+                    <span className="template-inline-meta">{selectedTemplate.title}</span>
                   </div>
                   <div className="editor-hint-row">
-                    <span>别写成长文宣传稿，按“场景 + 图证 + 决策信息”来组织</span>
+                    <span>{selectedTemplate.layoutHint}</span>
                     <button className="inline-ai-entry" type="button" onClick={() => setDrawerOpen(true)}>
                       <AiSparkIcon />
                       AI 助手

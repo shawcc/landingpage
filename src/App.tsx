@@ -17,6 +17,7 @@ import {
 } from '@platejs/basic-nodes/react'
 import { Element as SlateElement, Text, Transforms } from 'slate'
 import './App.css'
+import heroImage from './assets/hero.png'
 
 type AssistantAnswers = {
   audience: string
@@ -27,6 +28,8 @@ type AssistantAnswers = {
   tone: string
 }
 
+type DetailTemplateId = 'story' | 'feature' | 'case'
+
 type DraftPayload = {
   intro: string
   sections: Array<{
@@ -35,9 +38,25 @@ type DraftPayload = {
   }>
 }
 
+type DetailImage = {
+  alt: string
+  caption: string
+  src: string
+}
+
+type DetailTemplate = {
+  answers: AssistantAnswers
+  description: string
+  id: DetailTemplateId
+  image: DetailImage
+  layoutHint: string
+  title: string
+}
+
 type AssistantExample = {
   answers: AssistantAnswers
   description: string
+  templateId: DetailTemplateId
   title: string
 }
 
@@ -74,10 +93,71 @@ const assistantPrompts = [
   },
 ] as const
 
+const detailTemplates: DetailTemplate[] = [
+  {
+    id: 'story',
+    title: '图文说明',
+    description: '先讲清问题和适用对象，再穿插一张产品截图，适合大多数插件详情页。',
+    layoutHint: '总述 + 图文说明 + 适用对象 + 核心能力 + 使用场景',
+    image: {
+      src: heroImage,
+      alt: '插件界面截图示意',
+      caption: '配一张产品界面截图，让读者更快理解实际使用界面。',
+    },
+    answers: {
+      problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
+      audience: '适合服务团队、运营团队，以及流程较复杂的中大型企业。',
+      capabilities: '工单协同、权限管理、SLA 管控',
+      scenes: '跨部门协作、客户服务处理、流程升级与跟踪',
+      tone: '专业、可信、简洁，不要太营销',
+      cta: '了解更多或预约演示',
+    },
+  },
+  {
+    id: 'feature',
+    title: '能力亮点',
+    description: '适合核心能力比较明确的插件，用图文穿插的方式突出重点功能。',
+    layoutHint: '价值概览 + 能力截图 + 能力拆解 + 适用场景 + 接入说明',
+    image: {
+      src: heroImage,
+      alt: '能力亮点截图示意',
+      caption: '在能力说明中插入一张功能截图，正文看起来会更像真实商品详情。',
+    },
+    answers: {
+      problem: '帮助商家更快配置营销活动，降低活动配置门槛并减少执行错误。',
+      audience: '适合需要频繁做营销活动的电商商家、运营人员和增长团队。',
+      capabilities: '活动配置、规则校验、数据看板',
+      scenes: '大促活动、日常促销、新品上线',
+      tone: '清晰、直接、偏业务说明，不要过度销售化',
+      cta: '查看演示或联系咨询',
+    },
+  },
+  {
+    id: 'case',
+    title: '场景案例',
+    description: '先讲业务问题，再展示一张流程或界面图，适合强调落地场景的插件。',
+    layoutHint: '问题背景 + 场景图 + 落地流程 + 使用变化 + 补充说明',
+    image: {
+      src: heroImage,
+      alt: '场景流程示意图',
+      caption: '用一张流程或场景图辅助说明，会比纯文本更容易讲清业务链路。',
+    },
+    answers: {
+      problem: '帮助团队统一查看经营数据，减少多系统切换和口径不一致的问题。',
+      audience: '适合运营、管理层和需要经常查看报表的业务团队。',
+      capabilities: '核心指标看板、报表汇总、异常提醒',
+      scenes: '经营复盘、业务监控、日报周报分析',
+      tone: '稳重、专业、强调可信度',
+      cta: '了解方案或申请试用',
+    },
+  },
+]
+
 const assistantExamples: AssistantExample[] = [
   {
     title: '客服协同插件',
     description: '适合服务团队、工单、协同处理类产品。',
+    templateId: 'story',
     answers: {
       problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
       audience: '适合服务团队、运营团队，以及流程较复杂的中大型企业。',
@@ -90,6 +170,7 @@ const assistantExamples: AssistantExample[] = [
   {
     title: '营销活动插件',
     description: '适合优惠、促销、活动配置类产品。',
+    templateId: 'feature',
     answers: {
       problem: '帮助商家更快配置营销活动，降低活动配置门槛并减少执行错误。',
       audience: '适合需要频繁做营销活动的电商商家、运营人员和增长团队。',
@@ -102,6 +183,7 @@ const assistantExamples: AssistantExample[] = [
   {
     title: '数据分析插件',
     description: '适合经营分析、报表与看板类产品。',
+    templateId: 'case',
     answers: {
       problem: '帮助团队统一查看经营数据，减少多系统切换和口径不一致的问题。',
       audience: '适合运营、管理层和需要经常查看报表的业务团队。',
@@ -113,16 +195,9 @@ const assistantExamples: AssistantExample[] = [
   },
 ]
 
-const defaultAnswers: AssistantAnswers = {
-  problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
-  audience: '适合服务团队、运营团队，以及流程较复杂的中大型企业。',
-  capabilities: '工单协同、权限管理、SLA 管控',
-  scenes: '跨部门协作、客户服务处理、流程升级与跟踪',
-  tone: '专业、可信、简洁，不要太营销',
-  cta: '了解更多或预约演示',
-}
-
-const customBlockTypes = new Set(['detail-section'])
+const defaultTemplate = detailTemplates[0]
+const defaultAnswers: AssistantAnswers = defaultTemplate.answers
+const customBlockTypes = new Set(['detail-section', 'detail-image'])
 
 function text(textValue: string, marks: Record<string, boolean> = {}) {
   return { text: textValue, ...marks }
@@ -143,14 +218,37 @@ function detailSection(title: string, paragraphs: string[]) {
   }
 }
 
+function detailImage(image: DetailImage) {
+  return {
+    type: 'detail-image',
+    image,
+    children: [text('')],
+  }
+}
+
 function copyValue(value: Value): Value {
   return JSON.parse(JSON.stringify(value))
+}
+
+function getTemplateById(templateId: DetailTemplateId) {
+  return detailTemplates.find((item) => item.id === templateId) || defaultTemplate
+}
+
+function splitInput(value: string) {
+  return value
+    .split(/[、,，\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 function serializeValueToText(value: Value) {
   return value
     .map((node: any) => {
       if (!node) return ''
+      if (node.type === 'detail-image') {
+        const image = node.image || {}
+        return `[图片] ${image.caption || image.alt || '详情图片'}`
+      }
       if (node.type === 'detail-section') {
         return node.children.map((child: any) => getNodeText(child)).join('\n')
       }
@@ -173,6 +271,15 @@ function serializeValueToHtml(value: Value) {
   return value
     .map((node: any) => {
       if (!node) return ''
+      if (node.type === 'detail-image') {
+        const image = node.image || {}
+        return [
+          '<figure>',
+          `<img src="${escapeHtml(image.src || '')}" alt="${escapeHtml(image.alt || '')}" />`,
+          image.caption ? `<figcaption>${escapeHtml(image.caption)}</figcaption>` : '',
+          '</figure>',
+        ].join('')
+      }
       if (node.type === 'detail-section') {
         const [titleNode, ...paragraphNodes] = node.children ?? []
         const title = `<h2>${escapeHtml(getNodeText(titleNode))}</h2>`
@@ -192,21 +299,68 @@ function appendDraft(base: Value, draft: Value): Value {
   return [...copyValue(base), ...copyValue(draft)]
 }
 
-function buildDraft(answers: AssistantAnswers): Value {
-  const capabilities = answers.capabilities
-    .split(/[、,，\n]/)
-    .map((item) => item.trim())
-    .filter(Boolean)
+function buildDraft(answers: AssistantAnswers, template: DetailTemplate = defaultTemplate): Value {
+  const capabilities = splitInput(answers.capabilities)
+  const scenes = splitInput(answers.scenes)
+  const intro = `这款插件主要用于${answers.problem}整体表达建议保持${answers.tone}，更适合放在平台商品详情区中自然阅读。`
 
-  const scenes = answers.scenes
-    .split(/[、,，\n]/)
-    .map((item) => item.trim())
-    .filter(Boolean)
+  if (template.id === 'feature') {
+    return [
+      paragraph(intro),
+      detailSection('为什么值得用', [
+        answers.audience,
+        '先用一段总述讲清价值，再配一张能力截图，读者更容易把文字和产品界面对上。',
+      ]),
+      detailImage(template.image),
+      detailSection(
+        '能力拆解',
+        capabilities.length
+          ? capabilities.map((item) => `${item}，建议配合一段简短说明，讲清它在实际流程里承担什么角色。`)
+          : ['建议从配置效率、规则控制和结果反馈三个方向展开说明。']
+      ),
+      detailSection(
+        '适用场景',
+        scenes.length
+          ? scenes.map((item) => `适合用于${item}，可以在正文里穿插一张对应截图或流程图帮助理解。`)
+          : ['建议结合真实业务环节，说明插件最适合出现在哪些流程节点。']
+      ),
+      detailSection('接入与后续', [
+        '建议补充接入门槛、配置周期和常见问题，让详情页更像真实的商品说明。',
+        `如果读者看完后希望继续了解，可以引导他${answers.cta}。`,
+      ]),
+    ]
+  }
+
+  if (template.id === 'case') {
+    return [
+      paragraph(intro),
+      detailSection('业务问题', [
+        `很多团队在${scenes[0] || '日常协作'}时，最先遇到的是信息分散、口径不一致或进度难追踪。`,
+        answers.audience,
+      ]),
+      detailImage(template.image),
+      detailSection(
+        '落地流程',
+        scenes.length
+          ? scenes.map((item) => `在${item}这个环节里，插件会把关键动作收敛到同一处完成，减少来回切换。`)
+          : ['建议结合一个实际流程，从触发、执行到跟踪三个阶段展开说明。']
+      ),
+      detailSection(
+        '上线后你会看到',
+        capabilities.length
+          ? capabilities.map((item) => `${item}会直接体现在日常操作里，让读者更容易理解上线后的变化。`)
+          : ['建议写清楚上线前后最直观的差别，例如信息同步更快、配置更清晰、协作更顺。']
+      ),
+      detailSection('补充说明', [
+        '如果产品需要额外配置、授权或适配，也建议在这里一次性讲清楚。',
+        `适合在结尾补一句行动引导，例如${answers.cta}。`,
+      ]),
+    ]
+  }
 
   return [
-    paragraph(
-      `这款插件主要用于${answers.problem}整体表达建议保持${answers.tone}，更适合放在平台商品详情区中自然阅读。`
-    ),
+    paragraph(intro),
+    detailImage(template.image),
     detailSection('适合谁使用', [
       answers.audience,
       '如果读者还不确定自己是否适用，可以继续通过能力说明和使用场景来判断。',
@@ -214,13 +368,13 @@ function buildDraft(answers: AssistantAnswers): Value {
     detailSection(
       '核心能力',
       capabilities.length
-        ? capabilities.map((item, index) => `${index + 1}. ${item}。`)
+        ? capabilities.map((item) => `${item}，建议在正文里各用一小段自然语言展开。`)
         : ['建议从协作、权限、流程和服务管理几个方向展开说明。']
     ),
     detailSection(
       '典型使用场景',
       scenes.length
-        ? scenes.map((item, index) => `${index + 1}. ${item}。`)
+        ? scenes.map((item) => `适合用于${item}，如果能配合一张界面截图，读者会更容易理解它在什么环节发挥作用。`)
         : ['建议结合真实业务环节，说明插件最适合出现在哪些流程节点。']
     ),
     detailSection('补充说明', [
@@ -230,7 +384,7 @@ function buildDraft(answers: AssistantAnswers): Value {
   ]
 }
 
-function draftPayloadToValue(payload: DraftPayload): Value {
+function draftPayloadToValue(payload: DraftPayload, template: DetailTemplate = defaultTemplate): Value {
   const sections = Array.isArray(payload.sections) ? payload.sections : []
   const result: Value = []
 
@@ -238,22 +392,35 @@ function draftPayloadToValue(payload: DraftPayload): Value {
     result.push(paragraph(payload.intro.trim()))
   }
 
-  sections.forEach((section) => {
+  sections.forEach((section, index) => {
     const title = section.title?.trim()
     const paragraphs = Array.isArray(section.paragraphs)
       ? section.paragraphs.map((item) => item.trim()).filter(Boolean)
       : []
 
-    if (title && paragraphs.length) {
-      result.push(detailSection(title, paragraphs))
+    if (!title || !paragraphs.length) return
+
+    if (template.id !== 'case' && index === 0) {
+      result.push(detailImage(template.image))
+    }
+
+    result.push(detailSection(title, paragraphs))
+
+    if (template.id === 'case' && index === 0) {
+      result.push(detailImage(template.image))
     }
   })
 
-  return result.length ? result : buildDraft(defaultAnswers)
+  if (!result.some((node: any) => node?.type === 'detail-image')) {
+    result.splice(Math.min(result.length, 1), 0, detailImage(template.image))
+  }
+
+  return result.length ? result : buildDraft(template.answers, template)
 }
 
 function getNodeText(node: any): string {
   if (!node) return ''
+  if (node.type === 'detail-image') return node.image?.caption || node.image?.alt || ''
   if (Text.isText(node)) return node.text
   if (Array.isArray(node.children)) return node.children.map(getNodeText).join('')
   return ''
@@ -293,6 +460,21 @@ function DetailSectionElement(props: PlateElementProps) {
   return <PlateElement as="section" className="editor-section" {...props} />
 }
 
+function DetailImageElement(props: PlateElementProps) {
+  const image = (props.element as any).image || {}
+
+  return (
+    <PlateElement as="figure" className="editor-image-block" {...props}>
+      <div className="editor-image-frame" contentEditable={false}>
+        <div className="editor-image-badge">详情配图</div>
+        <img className="editor-image" src={image.src} alt={image.alt || '详情配图'} />
+        <figcaption className="editor-image-caption">{image.caption}</figcaption>
+      </div>
+      <span className="editor-image-anchor">{props.children}</span>
+    </PlateElement>
+  )
+}
+
 const ParagraphPlugin = createPlatePlugin({
   key: 'p',
   node: { isElement: true, type: 'p', component: ParagraphElement },
@@ -303,6 +485,11 @@ const DetailSectionPlugin = createPlatePlugin({
   node: { isElement: true, type: 'detail-section', component: DetailSectionElement },
 })
 
+const DetailImagePlugin = createPlatePlugin({
+  key: 'detail-image',
+  node: { isElement: true, type: 'detail-image', component: DetailImageElement },
+})
+
 const plugins = [
   ParagraphPlugin.withComponent(ParagraphElement),
   H2Plugin.withComponent(H2Element),
@@ -311,6 +498,7 @@ const plugins = [
   ItalicPlugin,
   UnderlinePlugin,
   DetailSectionPlugin,
+  DetailImagePlugin,
 ]
 
 function AiSparkIcon() {
@@ -411,7 +599,7 @@ function EditorCanvas({
       >
         <PlateContent
           className="editor-content"
-          placeholder="请输入插件详情（图片支持缩放）"
+          placeholder="请输入插件详情（已模拟图文混排场景）"
         />
       </Plate>
     </div>
@@ -420,6 +608,16 @@ function EditorCanvas({
 
 function PreviewBlock({ node }: { node: any }) {
   if (!node || Text.isText(node)) return null
+
+  if (node.type === 'detail-image') {
+    const image = node.image || {}
+    return (
+      <figure className="draft-image-card">
+        <img className="draft-image" src={image.src} alt={image.alt || '详情配图'} />
+        <figcaption className="draft-image-caption">{image.caption}</figcaption>
+      </figure>
+    )
+  }
 
   if (node.type === 'detail-section') {
     return (
@@ -447,6 +645,45 @@ function DraftPreview({ draft }: { draft: Value }) {
   )
 }
 
+function TemplateGallery({
+  activeTemplateId,
+  onSelect,
+  variant,
+}: {
+  activeTemplateId: DetailTemplateId
+  onSelect: (template: DetailTemplate) => void
+  variant: 'compact' | 'drawer'
+}) {
+  const listClassName = variant === 'compact' ? 'template-list compact' : 'template-list'
+
+  return (
+    <div className={listClassName}>
+      {detailTemplates.map((template) => {
+        const isActive = activeTemplateId === template.id
+        const cardClassName = isActive
+          ? `template-card ${variant} active`
+          : `template-card ${variant}`
+
+        return (
+          <button
+            key={template.id}
+            className={cardClassName}
+            type="button"
+            onClick={() => onSelect(template)}
+          >
+            <img className="template-thumb" src={template.image.src} alt={template.image.alt} />
+            <div className="template-copy">
+              <strong>{template.title}</strong>
+              <span>{template.description}</span>
+              <em>{template.layoutHint}</em>
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function AssistantDrawer({
   answers,
   currentStep,
@@ -462,7 +699,9 @@ function AssistantDrawer({
   onNextStep,
   onPrevStep,
   onReplace,
+  onSelectTemplate,
   onUseExample,
+  selectedTemplateId,
   statusLabel,
 }: {
   answers: AssistantAnswers
@@ -479,7 +718,9 @@ function AssistantDrawer({
   onNextStep: () => void
   onPrevStep: () => void
   onReplace: () => void
+  onSelectTemplate: (template: DetailTemplate) => void
   onUseExample: (example: AssistantExample) => void
+  selectedTemplateId: DetailTemplateId
   statusLabel: string
 }) {
   const activePrompt = assistantPrompts[currentStep]
@@ -508,7 +749,16 @@ function AssistantDrawer({
         </div>
 
         <div className="assistant-block">
-          <div className="assistant-block__title">范例</div>
+          <div className="assistant-block__title">模板</div>
+          <TemplateGallery
+            activeTemplateId={selectedTemplateId}
+            onSelect={onSelectTemplate}
+            variant="drawer"
+          />
+        </div>
+
+        <div className="assistant-block">
+          <div className="assistant-block__title">行业范例</div>
           <div className="example-list">
             {assistantExamples.map((example) => (
               <button
@@ -595,17 +845,18 @@ function AssistantDrawer({
 }
 
 function App() {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<DetailTemplateId>(defaultTemplate.id)
   const [seed, setSeed] = useState(1)
   const [currentStep, setCurrentStep] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(true)
-  const [value, setValue] = useState<Value>([
-    paragraph('这里是插件详情编辑区。你可以直接编写内容，也可以使用 AI 助手辅助生成。'),
-  ])
+  const [value, setValue] = useState<Value>(() => copyValue(buildDraft(defaultAnswers, defaultTemplate)))
   const [answers, setAnswers] = useState<AssistantAnswers>(defaultAnswers)
-  const [draft, setDraft] = useState<Value>(() => buildDraft(defaultAnswers))
+  const [draft, setDraft] = useState<Value>(() => buildDraft(defaultAnswers, defaultTemplate))
   const [isGenerating, setIsGenerating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [statusLabel, setStatusLabel] = useState('当前使用本地草稿生成逻辑')
+  const [statusLabel, setStatusLabel] = useState(`当前模板：${defaultTemplate.title}`)
+
+  const selectedTemplate = getTemplateById(selectedTemplateId)
 
   const updateAnswer = (key: keyof AssistantAnswers, nextValue: string) => {
     setAnswers((current) => ({ ...current, [key]: nextValue }))
@@ -619,9 +870,21 @@ function App() {
     setCurrentStep((current) => Math.max(current - 1, 0))
   }
 
+  const applyTemplate = (template: DetailTemplate) => {
+    setSelectedTemplateId(template.id)
+    setAnswers(template.answers)
+    setDraft(buildDraft(template.answers, template))
+    setCurrentStep(0)
+    setStatusLabel(`已切换模板：${template.title}`)
+    setErrorMessage(null)
+    setDrawerOpen(true)
+  }
+
   const useExample = (example: AssistantExample) => {
+    const template = getTemplateById(example.templateId)
+    setSelectedTemplateId(template.id)
     setAnswers(example.answers)
-    setDraft(buildDraft(example.answers))
+    setDraft(buildDraft(example.answers, template))
     setCurrentStep(assistantPrompts.length - 1)
     setStatusLabel(`已套用范例：${example.title}`)
     setErrorMessage(null)
@@ -638,7 +901,14 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({
+          answers,
+          template: {
+            title: selectedTemplate.title,
+            description: selectedTemplate.description,
+            layoutHint: selectedTemplate.layoutHint,
+          },
+        }),
       })
 
       if (!response.ok) {
@@ -647,11 +917,15 @@ function App() {
       }
 
       const payload = (await response.json()) as { draft: DraftPayload; model?: string }
-      setDraft(draftPayloadToValue(payload.draft))
-      setStatusLabel(payload.model ? `已使用 AI 模型：${payload.model}` : '已使用 AI 生成草稿')
+      setDraft(draftPayloadToValue(payload.draft, selectedTemplate))
+      setStatusLabel(
+        payload.model
+          ? `已使用 ${selectedTemplate.title} · AI 模型：${payload.model}`
+          : `已使用 ${selectedTemplate.title} 生成草稿`
+      )
     } catch (error) {
-      setDraft(buildDraft(answers))
-      setStatusLabel('未命中 AI 服务，已回退到本地草稿')
+      setDraft(buildDraft(answers, selectedTemplate))
+      setStatusLabel(`未命中 AI 服务，已回退到本地 ${selectedTemplate.title} 草稿`)
       setErrorMessage(error instanceof Error ? error.message : 'AI 服务调用失败')
     } finally {
       setIsGenerating(false)
@@ -762,8 +1036,22 @@ function App() {
               <div className="sim-row editor-row">
                 <label>插件详情</label>
                 <div className="editor-field">
+                  <div className="template-strip">
+                    <div className="template-strip__header">
+                      <div>
+                        <strong>详情模板</strong>
+                        <span>先选模板，再让 AI 帮你补正文和图文结构</span>
+                      </div>
+                      <span className="template-strip__meta">{selectedTemplate.layoutHint}</span>
+                    </div>
+                    <TemplateGallery
+                      activeTemplateId={selectedTemplateId}
+                      onSelect={applyTemplate}
+                      variant="compact"
+                    />
+                  </div>
                   <div className="editor-hint-row">
-                    <span>通过 AI 助手辅助整理文案，再插入到富文本中</span>
+                    <span>已模拟正文图片场景，AI 生成时会自动插入图文段落</span>
                     <button className="inline-ai-entry" type="button" onClick={() => setDrawerOpen(true)}>
                       <AiSparkIcon />
                       AI 助手
@@ -776,6 +1064,16 @@ function App() {
                       onChange={setValue}
                       onOpenAi={() => setDrawerOpen(true)}
                     />
+                  </div>
+                  <div className="editor-media-strip">
+                    <div className="editor-media-strip__label">当前正文配图</div>
+                    <div className="editor-media-card">
+                      <img src={selectedTemplate.image.src} alt={selectedTemplate.image.alt} />
+                      <div>
+                        <strong>{selectedTemplate.image.alt}</strong>
+                        <span>{selectedTemplate.image.caption}</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="field-error">此项为必填项</div>
                 </div>
@@ -810,7 +1108,9 @@ function App() {
         onNextStep={nextStep}
         onPrevStep={prevStep}
         onReplace={replaceWithDraft}
+        onSelectTemplate={applyTemplate}
         onUseExample={useExample}
+        selectedTemplateId={selectedTemplateId}
         statusLabel={statusLabel}
       />
     </div>

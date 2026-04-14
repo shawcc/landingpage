@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import type { Value } from 'platejs'
 import {
   Plate,
@@ -291,21 +291,7 @@ const assistantExamples: AssistantExample[] = [
 
 const defaultTemplate = detailTemplates[0]
 const defaultAnswers: AssistantAnswers = defaultTemplate.answers
-const editorImageLibrary: DetailImage[] = Array.from(
-  new Map(
-    detailTemplates
-      .flatMap((template) => template.images)
-      .map((image) => [image.src, image])
-  ).values()
-)
-
-const customBlockTypes = new Set([
-  'detail-section',
-  'detail-image',
-  'two-column-section',
-  'column-item',
-  'callout-box',
-])
+const customBlockTypes = new Set(['detail-section', 'detail-image'])
 
 function text(textValue: string, marks: Record<string, boolean> = {}) {
   return { text: textValue, ...marks }
@@ -331,34 +317,6 @@ function detailImage(image: DetailImage) {
     type: 'detail-image',
     image,
     children: [text('')],
-  }
-}
-
-function columnItem(title: string, description: string) {
-  return {
-    type: 'column-item',
-    children: [heading2(title), paragraph(description)],
-  }
-}
-
-function twoColumnSection() {
-  return {
-    type: 'two-column-section',
-    children: [
-      columnItem('左侧说明', '适合放场景、流程节点或某个重点能力的解释。'),
-      columnItem('右侧说明', '适合放补充信息、截图解读，或者与左侧形成对照。'),
-    ],
-  }
-}
-
-function calloutBox(tone: 'teal' | 'purple' = 'teal') {
-  return {
-    type: 'callout-box',
-    tone,
-    children: [
-      heading2('强调信息'),
-      paragraph('适合放关键提醒、上线边界、接入条件，或需要重点突出的说明。'),
-    ],
   }
 }
 
@@ -437,28 +395,6 @@ function serializeValueToHtml(value: Value) {
           '</figcaption>',
           '</figure>',
         ].join('')
-      }
-      if (node.type === 'two-column-section') {
-        const columns = (node.children ?? [])
-          .map((column: any) => {
-            const titleNode = column.children?.[0]
-            const bodyNodes = column.children?.slice(1) ?? []
-            const title = `<h3>${escapeHtml(getNodeText(titleNode))}</h3>`
-            const paragraphs = bodyNodes
-              .map((child: any) => `<p>${escapeHtml(getNodeText(child))}</p>`)
-              .join('')
-            return `<div>${title}${paragraphs}</div>`
-          })
-          .join('')
-        return `<section>${columns}</section>`
-      }
-      if (node.type === 'callout-box') {
-        const [titleNode, ...bodyNodes] = node.children ?? []
-        const title = `<h3>${escapeHtml(getNodeText(titleNode))}</h3>`
-        const paragraphs = bodyNodes
-          .map((child: any) => `<p>${escapeHtml(getNodeText(child))}</p>`)
-          .join('')
-        return `<section>${title}${paragraphs}</section>`
       }
       if (node.type === 'detail-section') {
         const [titleNode, ...paragraphNodes] = node.children ?? []
@@ -679,52 +615,6 @@ function DetailSectionElement(props: PlateElementProps) {
 
 function DetailImageElement(props: PlateElementProps) {
   const image = (props.element as any).image || {}
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const uploadInputRef = useRef<HTMLInputElement | null>(null)
-
-  const replaceImage = (nextImage: DetailImage) => {
-    Transforms.setNodes(
-      props.editor as any,
-      {
-        image: {
-          ...image,
-          src: nextImage.src,
-          alt: nextImage.alt,
-        },
-      } as any,
-      { at: props.path }
-    )
-    setPickerOpen(false)
-  }
-
-  const updateImageSource = (src: string, alt: string) => {
-    Transforms.setNodes(
-      props.editor as any,
-      {
-        image: {
-          ...image,
-          src,
-          alt,
-        },
-      } as any,
-      { at: props.path }
-    )
-    setPickerOpen(false)
-  }
-
-  const onUploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        updateImageSource(reader.result, file.name || image.alt || '上传图片')
-      }
-    }
-    reader.readAsDataURL(file)
-    event.target.value = ''
-  }
 
   return (
     <PlateElement as="figure" className="editor-image-block" {...props}>
@@ -735,101 +625,9 @@ function DetailImageElement(props: PlateElementProps) {
           <strong className="editor-image-title">{image.title}</strong>
           <p className="editor-image-caption">{image.caption}</p>
           <p className="editor-image-value">{image.value}</p>
-          <div className="editor-image-actions">
-            <button
-              className="editor-image-action"
-              type="button"
-              onMouseDown={(event) => {
-                event.preventDefault()
-                setPickerOpen((current) => !current)
-              }}
-            >
-              替换图片
-            </button>
-            <button
-              className="editor-image-action"
-              type="button"
-              onMouseDown={(event) => {
-                event.preventDefault()
-                uploadInputRef.current?.click()
-              }}
-            >
-              上传图片
-            </button>
-          </div>
-          <input
-            ref={uploadInputRef}
-            className="editor-file-input"
-            type="file"
-            accept="image/*"
-            onChange={onUploadImage}
-          />
-          {pickerOpen ? (
-            <div className="editor-image-picker">
-              {editorImageLibrary.map((item, index) => (
-                <button
-                  key={`${item.src}-${index}`}
-                  className="editor-image-option"
-                  type="button"
-                  onMouseDown={(event) => {
-                    event.preventDefault()
-                    replaceImage(item)
-                  }}
-                >
-                  <img src={item.src} alt={item.alt} />
-                  <span>{item.title}</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
         </figcaption>
       </div>
       <span className="editor-image-anchor">{props.children}</span>
-    </PlateElement>
-  )
-}
-
-function TwoColumnSectionElement(props: PlateElementProps) {
-  return <PlateElement as="section" className="editor-two-column" {...props} />
-}
-
-function ColumnItemElement(props: PlateElementProps) {
-  return <PlateElement as="div" className="editor-column-item" {...props} />
-}
-
-function CalloutBoxElement(props: PlateElementProps) {
-  const tone = ((props.element as any).tone || 'teal') as 'teal' | 'purple'
-
-  const setTone = (nextTone: 'teal' | 'purple') => {
-    Transforms.setNodes(props.editor as any, { tone: nextTone } as any, { at: props.path })
-  }
-
-  return (
-    <PlateElement as="section" className={`editor-callout tone-${tone}`} {...props}>
-      <div className="editor-callout-actions" contentEditable={false}>
-        <span>底色</span>
-        <button
-          className={tone === 'teal' ? 'editor-tone-chip active' : 'editor-tone-chip'}
-          type="button"
-          onMouseDown={(event) => {
-            event.preventDefault()
-            setTone('teal')
-          }}
-        >
-          青色
-        </button>
-        <button
-          className={tone === 'purple' ? 'editor-tone-chip active' : 'editor-tone-chip'}
-          type="button"
-          onMouseDown={(event) => {
-            event.preventDefault()
-            setTone('purple')
-          }}
-        >
-          紫色
-        </button>
-      </div>
-      {props.children}
     </PlateElement>
   )
 }
@@ -849,21 +647,6 @@ const DetailImagePlugin = createPlatePlugin({
   node: { isElement: true, type: 'detail-image', component: DetailImageElement },
 })
 
-const TwoColumnSectionPlugin = createPlatePlugin({
-  key: 'two-column-section',
-  node: { isElement: true, type: 'two-column-section', component: TwoColumnSectionElement },
-})
-
-const ColumnItemPlugin = createPlatePlugin({
-  key: 'column-item',
-  node: { isElement: true, type: 'column-item', component: ColumnItemElement },
-})
-
-const CalloutBoxPlugin = createPlatePlugin({
-  key: 'callout-box',
-  node: { isElement: true, type: 'callout-box', component: CalloutBoxElement },
-})
-
 const plugins = [
   ParagraphPlugin.withComponent(ParagraphElement),
   H2Plugin.withComponent(H2Element),
@@ -873,9 +656,6 @@ const plugins = [
   UnderlinePlugin,
   DetailSectionPlugin,
   DetailImagePlugin,
-  TwoColumnSectionPlugin,
-  ColumnItemPlugin,
-  CalloutBoxPlugin,
 ]
 
 function AiSparkIcon() {
@@ -895,8 +675,6 @@ function EditorCanvas({
     plugins,
     value: initialValue,
   })
-  const insertImageInputRef = useRef<HTMLInputElement | null>(null)
-  const [insertMenuOpen, setInsertMenuOpen] = useState(false)
 
   if (!editor) return null
   const plateEditor = editor as any
@@ -910,46 +688,6 @@ function EditorCanvas({
           SlateElement.isElement(node) && !customBlockTypes.has((node as any).type),
       }
     )
-  }
-
-  const insertImageBlock = () => {
-    Transforms.insertNodes(plateEditor, detailImage(editorImageLibrary[0]) as any)
-    setInsertMenuOpen(false)
-  }
-
-  const insertTwoColumnBlock = () => {
-    Transforms.insertNodes(plateEditor, twoColumnSection() as any)
-    setInsertMenuOpen(false)
-  }
-
-  const insertCalloutBlock = () => {
-    Transforms.insertNodes(plateEditor, calloutBox() as any)
-    setInsertMenuOpen(false)
-  }
-
-  const onInsertUploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        Transforms.insertNodes(
-          plateEditor,
-          detailImage({
-            ...editorImageLibrary[0],
-            src: reader.result,
-            alt: file.name || '上传图片',
-            title: '上传图片',
-            caption: '已从本地上传，可继续编辑说明文字。',
-            value: '建议补一句这张图想证明什么，避免只放截图没有解释。',
-          }) as any
-        )
-        setInsertMenuOpen(false)
-      }
-    }
-    reader.readAsDataURL(file)
-    event.target.value = ''
   }
 
   return (
@@ -1003,68 +741,6 @@ function EditorCanvas({
         >
           小标题
         </button>
-        <div className="toolbar-insert-group">
-          <button
-            className={insertMenuOpen ? 'toolbar-insert-button active' : 'toolbar-insert-button'}
-            onMouseDown={(event) => {
-              event.preventDefault()
-              setInsertMenuOpen((current) => !current)
-            }}
-          >
-            插入
-          </button>
-          {insertMenuOpen ? (
-            <div className="toolbar-insert-menu" contentEditable={false}>
-              <button
-                className="toolbar-insert-item"
-                type="button"
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  insertImageBlock()
-                }}
-              >
-                插入图片块
-              </button>
-              <button
-                className="toolbar-insert-item"
-                type="button"
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  insertImageInputRef.current?.click()
-                }}
-              >
-                上传本地图片
-              </button>
-              <button
-                className="toolbar-insert-item"
-                type="button"
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  insertTwoColumnBlock()
-                }}
-              >
-                插入分栏
-              </button>
-              <button
-                className="toolbar-insert-item"
-                type="button"
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  insertCalloutBlock()
-                }}
-              >
-                插入底色块
-              </button>
-            </div>
-          ) : null}
-          <input
-            ref={insertImageInputRef}
-            className="editor-file-input"
-            type="file"
-            accept="image/*"
-            onChange={onInsertUploadImage}
-          />
-        </div>
         <div className="toolbar-spacer" />
         <button className="editor-ai-button" type="button" onClick={onOpenAi}>
           <AiSparkIcon />

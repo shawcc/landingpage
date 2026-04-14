@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Value } from 'platejs'
 import {
   Plate,
@@ -680,6 +680,7 @@ function DetailSectionElement(props: PlateElementProps) {
 function DetailImageElement(props: PlateElementProps) {
   const image = (props.element as any).image || {}
   const [pickerOpen, setPickerOpen] = useState(false)
+  const uploadInputRef = useRef<HTMLInputElement | null>(null)
 
   const replaceImage = (nextImage: DetailImage) => {
     Transforms.setNodes(
@@ -694,6 +695,35 @@ function DetailImageElement(props: PlateElementProps) {
       { at: props.path }
     )
     setPickerOpen(false)
+  }
+
+  const updateImageSource = (src: string, alt: string) => {
+    Transforms.setNodes(
+      props.editor as any,
+      {
+        image: {
+          ...image,
+          src,
+          alt,
+        },
+      } as any,
+      { at: props.path }
+    )
+    setPickerOpen(false)
+  }
+
+  const onUploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        updateImageSource(reader.result, file.name || image.alt || '上传图片')
+      }
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
   }
 
   return (
@@ -716,7 +746,24 @@ function DetailImageElement(props: PlateElementProps) {
             >
               替换图片
             </button>
+            <button
+              className="editor-image-action"
+              type="button"
+              onMouseDown={(event) => {
+                event.preventDefault()
+                uploadInputRef.current?.click()
+              }}
+            >
+              上传图片
+            </button>
           </div>
+          <input
+            ref={uploadInputRef}
+            className="editor-file-input"
+            type="file"
+            accept="image/*"
+            onChange={onUploadImage}
+          />
           {pickerOpen ? (
             <div className="editor-image-picker">
               {editorImageLibrary.map((item, index) => (
@@ -848,6 +895,8 @@ function EditorCanvas({
     plugins,
     value: initialValue,
   })
+  const insertImageInputRef = useRef<HTMLInputElement | null>(null)
+  const [insertMenuOpen, setInsertMenuOpen] = useState(false)
 
   if (!editor) return null
   const plateEditor = editor as any
@@ -865,14 +914,42 @@ function EditorCanvas({
 
   const insertImageBlock = () => {
     Transforms.insertNodes(plateEditor, detailImage(editorImageLibrary[0]) as any)
+    setInsertMenuOpen(false)
   }
 
   const insertTwoColumnBlock = () => {
     Transforms.insertNodes(plateEditor, twoColumnSection() as any)
+    setInsertMenuOpen(false)
   }
 
   const insertCalloutBlock = () => {
     Transforms.insertNodes(plateEditor, calloutBox() as any)
+    setInsertMenuOpen(false)
+  }
+
+  const onInsertUploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        Transforms.insertNodes(
+          plateEditor,
+          detailImage({
+            ...editorImageLibrary[0],
+            src: reader.result,
+            alt: file.name || '上传图片',
+            title: '上传图片',
+            caption: '已从本地上传，可继续编辑说明文字。',
+            value: '建议补一句这张图想证明什么，避免只放截图没有解释。',
+          }) as any
+        )
+        setInsertMenuOpen(false)
+      }
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
   }
 
   return (
@@ -926,30 +1003,68 @@ function EditorCanvas({
         >
           小标题
         </button>
-        <button
-          onMouseDown={(event) => {
-            event.preventDefault()
-            insertImageBlock()
-          }}
-        >
-          插图
-        </button>
-        <button
-          onMouseDown={(event) => {
-            event.preventDefault()
-            insertTwoColumnBlock()
-          }}
-        >
-          分栏
-        </button>
-        <button
-          onMouseDown={(event) => {
-            event.preventDefault()
-            insertCalloutBlock()
-          }}
-        >
-          底色
-        </button>
+        <div className="toolbar-insert-group">
+          <button
+            className={insertMenuOpen ? 'toolbar-insert-button active' : 'toolbar-insert-button'}
+            onMouseDown={(event) => {
+              event.preventDefault()
+              setInsertMenuOpen((current) => !current)
+            }}
+          >
+            插入
+          </button>
+          {insertMenuOpen ? (
+            <div className="toolbar-insert-menu" contentEditable={false}>
+              <button
+                className="toolbar-insert-item"
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertImageBlock()
+                }}
+              >
+                插入图片块
+              </button>
+              <button
+                className="toolbar-insert-item"
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertImageInputRef.current?.click()
+                }}
+              >
+                上传本地图片
+              </button>
+              <button
+                className="toolbar-insert-item"
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertTwoColumnBlock()
+                }}
+              >
+                插入分栏
+              </button>
+              <button
+                className="toolbar-insert-item"
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertCalloutBlock()
+                }}
+              >
+                插入底色块
+              </button>
+            </div>
+          ) : null}
+          <input
+            ref={insertImageInputRef}
+            className="editor-file-input"
+            type="file"
+            accept="image/*"
+            onChange={onInsertUploadImage}
+          />
+        </div>
         <div className="toolbar-spacer" />
         <button className="editor-ai-button" type="button" onClick={onOpenAi}>
           <AiSparkIcon />

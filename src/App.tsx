@@ -22,13 +22,13 @@ import heroImage from './assets/hero.png'
 type AssistantAnswers = {
   audience: string
   capabilities: string
+  concerns: string
   cta: string
   problem: string
   scenes: string
-  tone: string
 }
 
-type DetailTemplateId = 'story' | 'feature' | 'case'
+type DetailTemplateId = 'scenario' | 'capability' | 'integration' | 'decision'
 
 type DraftPayload = {
   intro: string
@@ -41,7 +41,10 @@ type DraftPayload = {
 type DetailImage = {
   alt: string
   caption: string
+  label: string
   src: string
+  title: string
+  value: string
 }
 
 type DetailTemplate = {
@@ -60,95 +63,130 @@ type AssistantExample = {
   title: string
 }
 
-const assistantPrompts = [
+const assistantPrompts: Array<{
+  key: keyof AssistantAnswers
+  placeholder: string
+  title: string
+}> = [
   {
     key: 'problem',
-    title: '这个插件主要解决什么问题？',
-    placeholder: '例如：帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
+    title: '这个插件先解决什么业务问题？',
+    placeholder: '例如：让客服、运营和实施在同一条工单链路里协同，不再靠群消息追进度。',
   },
   {
     key: 'audience',
-    title: '它更适合什么类型的客户？',
-    placeholder: '例如：服务团队、运营团队、流程复杂的中大型企业。',
-  },
-  {
-    key: 'capabilities',
-    title: '最核心的 3 个能力是什么？',
-    placeholder: '例如：工单协同、权限管理、SLA 管控。',
+    title: '谁会使用它？最好具体到角色。',
+    placeholder: '例如：客服主管、一线客服、实施顾问和运营负责人。',
   },
   {
     key: 'scenes',
-    title: '最常见的使用场景是什么？',
-    placeholder: '例如：跨部门协作、客户服务处理、流程升级与跟踪。',
+    title: '它最常出现在哪几个流程节点？',
+    placeholder: '例如：工单受理、升级处理、跨部门协同、SLA 跟踪。',
   },
   {
-    key: 'tone',
-    title: '希望整体是什么语气？',
-    placeholder: '例如：专业、可信、简洁，不要太营销。',
+    key: 'capabilities',
+    title: '最值得截图展示的 3 个界面或动作是什么？',
+    placeholder: '例如：统一工单台、权限视图、超时预警面板。',
+  },
+  {
+    key: 'concerns',
+    title: '客户决策前最关心什么？',
+    placeholder: '例如：接入周期、权限范围、是否影响现有流程、支持哪些版本。',
   },
   {
     key: 'cta',
-    title: '希望用户看完后做什么？',
-    placeholder: '例如：了解更多、联系咨询、预约演示。',
+    title: '看完后希望对方做什么？',
+    placeholder: '例如：预约演示、联系实施顾问、查看完整能力清单。',
   },
-] as const
+]
 
 const detailTemplates: DetailTemplate[] = [
   {
-    id: 'story',
-    title: '图文说明',
-    description: '先讲清问题和适用对象，再穿插一张产品截图，适合大多数插件详情页。',
-    layoutHint: '总述 + 图文说明 + 适用对象 + 核心能力 + 使用场景',
+    id: 'scenario',
+    title: '场景型',
+    description: '适合先讲谁在什么流程里使用，再用一张界面图证明产品确实能落地。',
+    layoutHint: '一句定位 + 使用流程 + 界面证据 + 上线变化 + 接入边界',
     image: {
       src: heroImage,
-      alt: '插件界面截图示意',
-      caption: '配一张产品界面截图，让读者更快理解实际使用界面。',
+      alt: '工单协同界面示意',
+      label: '界面证据',
+      title: '统一工单协同台',
+      caption: '把受理、分派、升级和跟进放到同一个界面里，减少跨系统切换。',
+      value: '适合用来证明这不是概念介绍，而是已经能支撑真实协同流程的产品。',
     },
     answers: {
-      problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
-      audience: '适合服务团队、运营团队，以及流程较复杂的中大型企业。',
-      capabilities: '工单协同、权限管理、SLA 管控',
-      scenes: '跨部门协作、客户服务处理、流程升级与跟踪',
-      tone: '专业、可信、简洁，不要太营销',
-      cta: '了解更多或预约演示',
+      problem: '让客服、运营和实施在同一条工单链路里协同，不再靠群消息追进度。',
+      audience: '客服主管、一线客服、实施顾问和运营负责人。',
+      scenes: '工单受理、升级处理、跨部门协同、SLA 跟踪',
+      capabilities: '统一工单台、升级协同面板、超时预警视图',
+      concerns: '接入周期多久、权限怎么分、是否影响现有流程、支持哪些版本',
+      cta: '预约演示或联系实施顾问',
     },
   },
   {
-    id: 'feature',
-    title: '能力亮点',
-    description: '适合核心能力比较明确的插件，用图文穿插的方式突出重点功能。',
-    layoutHint: '价值概览 + 能力截图 + 能力拆解 + 适用场景 + 接入说明',
+    id: 'capability',
+    title: '能力型',
+    description: '适合核心界面很有说服力的插件，重点把 3 个关键界面讲透。',
+    layoutHint: '一句定位 + 关键界面 + 能力亮点 + 使用流程 + 接入边界',
     image: {
       src: heroImage,
-      alt: '能力亮点截图示意',
-      caption: '在能力说明中插入一张功能截图，正文看起来会更像真实商品详情。',
+      alt: '营销配置界面示意',
+      label: '关键界面',
+      title: '活动配置台',
+      caption: '规则、条件和生效范围集中在一个工作台完成，降低复杂活动配置的理解成本。',
+      value: '适合用来证明产品的价值来自界面和动作设计，而不是堆概念。',
     },
     answers: {
-      problem: '帮助商家更快配置营销活动，降低活动配置门槛并减少执行错误。',
-      audience: '适合需要频繁做营销活动的电商商家、运营人员和增长团队。',
-      capabilities: '活动配置、规则校验、数据看板',
-      scenes: '大促活动、日常促销、新品上线',
-      tone: '清晰、直接、偏业务说明，不要过度销售化',
-      cta: '查看演示或联系咨询',
+      problem: '让商家更快配置复杂营销活动，减少人工校验和上线错误。',
+      audience: '电商运营、增长团队、活动配置人员和业务负责人。',
+      scenes: '大促准备、日常促销、新品冷启动、活动复盘',
+      capabilities: '活动配置台、规则校验提醒、数据效果看板',
+      concerns: '上线前是否要改现有活动流程、是否支持灰度、学习成本高不高',
+      cta: '查看完整能力清单或申请试用',
     },
   },
   {
-    id: 'case',
-    title: '场景案例',
-    description: '先讲业务问题，再展示一张流程或界面图，适合强调落地场景的插件。',
-    layoutHint: '问题背景 + 场景图 + 落地流程 + 使用变化 + 补充说明',
+    id: 'integration',
+    title: '接入型',
+    description: '适合客户最关心接入成本和权限边界的插件，先把风险说清楚。',
+    layoutHint: '一句定位 + 接入方式 + 权限范围 + 界面证据 + 适用边界',
     image: {
       src: heroImage,
-      alt: '场景流程示意图',
-      caption: '用一张流程或场景图辅助说明，会比纯文本更容易讲清业务链路。',
+      alt: '接入与权限界面示意',
+      label: '接入证明',
+      title: '配置与权限面板',
+      caption: '把权限、字段映射和流程配置集中管理，降低上线前沟通成本。',
+      value: '适合用来回答企业客户最常问的“要接多久、谁能看、会不会影响现有系统”。',
     },
     answers: {
-      problem: '帮助团队统一查看经营数据，减少多系统切换和口径不一致的问题。',
-      audience: '适合运营、管理层和需要经常查看报表的业务团队。',
-      capabilities: '核心指标看板、报表汇总、异常提醒',
-      scenes: '经营复盘、业务监控、日报周报分析',
-      tone: '稳重、专业、强调可信度',
-      cta: '了解方案或申请试用',
+      problem: '帮助企业在不改动原有主流程的前提下接入新插件，并把权限和配置边界说清楚。',
+      audience: '实施团队、系统管理员、IT 管理员和业务 owner。',
+      scenes: '上线评估、权限配置、字段映射、灰度试运行',
+      capabilities: '配置面板、权限视图、字段映射页',
+      concerns: '是否需要额外账号、权限颗粒度够不够、兼容哪些环境、回滚难不难',
+      cta: '联系实施支持或查看接入说明',
+    },
+  },
+  {
+    id: 'decision',
+    title: '决策型',
+    description: '适合给负责人快速判断值不值得上，突出上线后的变化和决策边界。',
+    layoutHint: '一句定位 + 适用团队 + 界面证据 + 上线变化 + 决策前确认项',
+    image: {
+      src: heroImage,
+      alt: '经营分析界面示意',
+      label: '结果证明',
+      title: '经营分析总览页',
+      caption: '核心指标、异常变化和跟进动作放在同一屏，减少管理者来回切换系统。',
+      value: '适合用来帮助负责人判断这类产品会不会真正改变团队日常工作方式。',
+    },
+    answers: {
+      problem: '让管理者和运营团队在同一个界面看到关键经营数据，减少口径不一致和系统切换。',
+      audience: '运营负责人、部门管理者、数据分析人员和业务 owner。',
+      scenes: '日报周报查看、异常追踪、经营复盘、管理汇报',
+      capabilities: '总览看板、异常提醒、指标下钻分析',
+      concerns: '数据口径怎么统一、接入哪些数据源、是否支持权限隔离、上线后维护成本如何',
+      cta: '了解方案或预约产品演示',
     },
   },
 ]
@@ -156,42 +194,21 @@ const detailTemplates: DetailTemplate[] = [
 const assistantExamples: AssistantExample[] = [
   {
     title: '客服协同插件',
-    description: '适合服务团队、工单、协同处理类产品。',
-    templateId: 'story',
-    answers: {
-      problem: '帮助企业把跨部门服务流程统一起来，减少沟通成本和信息断层。',
-      audience: '适合服务团队、运营团队，以及流程较复杂的中大型企业。',
-      capabilities: '工单协同、权限管理、SLA 管控',
-      scenes: '跨部门协作、客户服务处理、流程升级与跟踪',
-      tone: '专业、可信、简洁，不要太营销',
-      cta: '了解更多或预约演示',
-    },
+    description: '适合客服、工单、协同处理类产品。',
+    templateId: 'scenario',
+    answers: detailTemplates[0].answers,
   },
   {
     title: '营销活动插件',
-    description: '适合优惠、促销、活动配置类产品。',
-    templateId: 'feature',
-    answers: {
-      problem: '帮助商家更快配置营销活动，降低活动配置门槛并减少执行错误。',
-      audience: '适合需要频繁做营销活动的电商商家、运营人员和增长团队。',
-      capabilities: '活动配置、规则校验、数据看板',
-      scenes: '大促活动、日常促销、新品上线',
-      tone: '清晰、直接、偏业务说明，不要过度销售化',
-      cta: '查看演示或联系咨询',
-    },
+    description: '适合活动配置、规则引擎类产品。',
+    templateId: 'capability',
+    answers: detailTemplates[1].answers,
   },
   {
     title: '数据分析插件',
-    description: '适合经营分析、报表与看板类产品。',
-    templateId: 'case',
-    answers: {
-      problem: '帮助团队统一查看经营数据，减少多系统切换和口径不一致的问题。',
-      audience: '适合运营、管理层和需要经常查看报表的业务团队。',
-      capabilities: '核心指标看板、报表汇总、异常提醒',
-      scenes: '经营复盘、业务监控、日报周报分析',
-      tone: '稳重、专业、强调可信度',
-      cta: '了解方案或申请试用',
-    },
+    description: '适合管理者决策、经营分析类产品。',
+    templateId: 'decision',
+    answers: detailTemplates[3].answers,
   },
 ]
 
@@ -241,13 +258,30 @@ function splitInput(value: string) {
     .filter(Boolean)
 }
 
+function buildProofImage(
+  template: DetailTemplate,
+  answers: AssistantAnswers,
+  capabilities = splitInput(answers.capabilities),
+  scenes = splitInput(answers.scenes)
+): DetailImage {
+  const firstCapability = capabilities[0] || template.image.title
+  const firstScene = scenes[0] || '关键业务流程'
+
+  return {
+    ...template.image,
+    title: firstCapability,
+    caption: `在${firstScene}里，读者最应该看到的是“${firstCapability}”这个动作或界面。`,
+    value: `这张图主要证明：${answers.problem}`,
+  }
+}
+
 function serializeValueToText(value: Value) {
   return value
     .map((node: any) => {
       if (!node) return ''
       if (node.type === 'detail-image') {
         const image = node.image || {}
-        return `[图片] ${image.caption || image.alt || '详情图片'}`
+        return `[图片] ${image.title || image.alt || '界面截图'}\n${image.caption || ''}\n${image.value || ''}`
       }
       if (node.type === 'detail-section') {
         return node.children.map((child: any) => getNodeText(child)).join('\n')
@@ -276,7 +310,11 @@ function serializeValueToHtml(value: Value) {
         return [
           '<figure>',
           `<img src="${escapeHtml(image.src || '')}" alt="${escapeHtml(image.alt || '')}" />`,
-          image.caption ? `<figcaption>${escapeHtml(image.caption)}</figcaption>` : '',
+          '<figcaption>',
+          image.title ? `<strong>${escapeHtml(image.title)}</strong>` : '',
+          image.caption ? `<p>${escapeHtml(image.caption)}</p>` : '',
+          image.value ? `<p>${escapeHtml(image.value)}</p>` : '',
+          '</figcaption>',
           '</figure>',
         ].join('')
       }
@@ -299,94 +337,135 @@ function appendDraft(base: Value, draft: Value): Value {
   return [...copyValue(base), ...copyValue(draft)]
 }
 
+function buildChangeParagraphs(problem: string, capabilities: string[]) {
+  const firstCapability = capabilities[0] || '关键动作'
+  const secondCapability = capabilities[1] || '信息同步'
+
+  return [
+    `上线后最直观的变化，通常不是“功能更多”，而是团队在处理${problem}时不需要再依赖额外沟通来补流程。`,
+    `${firstCapability}和${secondCapability}会直接影响日常使用感受，让一线执行者和负责人看到同一套状态。`,
+  ]
+}
+
+function buildDecisionParagraphs(concerns: string, cta: string) {
+  const concernPoints = splitInput(concerns)
+
+  return [
+    concernPoints.length
+      ? `决策前建议重点确认：${concernPoints.slice(0, 3).join('、')}。`
+      : '决策前建议至少确认接入周期、权限范围、兼容环境和后续维护方式。',
+    `如果需要继续推进，建议下一步${cta}。`,
+  ]
+}
+
 function buildDraft(answers: AssistantAnswers, template: DetailTemplate = defaultTemplate): Value {
   const capabilities = splitInput(answers.capabilities)
   const scenes = splitInput(answers.scenes)
-  const intro = `这款插件主要用于${answers.problem}整体表达建议保持${answers.tone}，更适合放在平台商品详情区中自然阅读。`
+  const proofImage = buildProofImage(template, answers, capabilities, scenes)
+  const intro = `这款插件主要用于${answers.problem}。下面的内容会按 B 端市场页常见方式，先讲适用流程，再用界面证明产品，再补充接入边界。`
 
-  if (template.id === 'feature') {
+  if (template.id === 'capability') {
     return [
       paragraph(intro),
-      detailSection('为什么值得用', [
-        answers.audience,
-        '先用一段总述讲清价值，再配一张能力截图，读者更容易把文字和产品界面对上。',
+      detailImage(proofImage),
+      detailSection('这类团队会先看什么', [
+        `更适合${answers.audience}。如果读者正在判断值不值得继续了解，通常会先看最能代表产品价值的界面。`,
       ]),
-      detailImage(template.image),
       detailSection(
-        '能力拆解',
+        '最值得展示的 3 个界面',
         capabilities.length
-          ? capabilities.map((item) => `${item}，建议配合一段简短说明，讲清它在实际流程里承担什么角色。`)
-          : ['建议从配置效率、规则控制和结果反馈三个方向展开说明。']
+          ? capabilities.map((item) => `${item}：建议用一张截图配一句解释，讲清这个动作在实际流程里替团队省掉了什么。`)
+          : ['建议优先展示一个主工作台、一个规则或权限界面、一个结果或提醒界面。']
       ),
       detailSection(
-        '适用场景',
+        '这些界面通常出现在哪些流程里',
         scenes.length
-          ? scenes.map((item) => `适合用于${item}，可以在正文里穿插一张对应截图或流程图帮助理解。`)
-          : ['建议结合真实业务环节，说明插件最适合出现在哪些流程节点。']
+          ? scenes.map((item) => `${item}：说明谁在这个节点打开插件，以及他需要在界面里完成什么。`)
+          : ['建议至少说明产品出现在什么环节、谁来操作、操作后产生什么结果。']
       ),
-      detailSection('接入与后续', [
-        '建议补充接入门槛、配置周期和常见问题，让详情页更像真实的商品说明。',
-        `如果读者看完后希望继续了解，可以引导他${answers.cta}。`,
-      ]),
+      detailSection('上线后的变化', buildChangeParagraphs(answers.problem, capabilities)),
+      detailSection('接入与边界', buildDecisionParagraphs(answers.concerns, answers.cta)),
     ]
   }
 
-  if (template.id === 'case') {
+  if (template.id === 'integration') {
     return [
       paragraph(intro),
-      detailSection('业务问题', [
-        `很多团队在${scenes[0] || '日常协作'}时，最先遇到的是信息分散、口径不一致或进度难追踪。`,
-        answers.audience,
+      detailSection('上线前通常由谁评估', [
+        `${answers.audience}会更关注它如何接入现有系统、是否影响现有权限模型，以及上线前要准备什么。`,
       ]),
-      detailImage(template.image),
       detailSection(
-        '落地流程',
+        '接入通常发生在哪些节点',
         scenes.length
-          ? scenes.map((item) => `在${item}这个环节里，插件会把关键动作收敛到同一处完成，减少来回切换。`)
-          : ['建议结合一个实际流程，从触发、执行到跟踪三个阶段展开说明。']
+          ? scenes.map((item) => `${item}：建议写清这个环节要做的配置动作，而不是只说“支持接入”。`)
+          : ['建议写清从评估、配置、试运行到正式上线的基本顺序。']
       ),
+      detailImage(proofImage),
       detailSection(
-        '上线后你会看到',
+        '最值得展示的配置或权限界面',
         capabilities.length
-          ? capabilities.map((item) => `${item}会直接体现在日常操作里，让读者更容易理解上线后的变化。`)
-          : ['建议写清楚上线前后最直观的差别，例如信息同步更快、配置更清晰、协作更顺。']
+          ? capabilities.map((item) => `${item}：截图应该证明配置是收敛的、权限是可控的，而不是只展示页面样式。`)
+          : ['建议至少展示配置面板、权限视图和字段映射或流程管理界面。']
       ),
-      detailSection('补充说明', [
-        '如果产品需要额外配置、授权或适配，也建议在这里一次性讲清楚。',
-        `适合在结尾补一句行动引导，例如${answers.cta}。`,
+      detailSection('决策前要确认的边界', buildDecisionParagraphs(answers.concerns, answers.cta)),
+    ]
+  }
+
+  if (template.id === 'decision') {
+    return [
+      paragraph(intro),
+      detailSection('这类团队为什么会继续看下去', [
+        `${answers.audience}通常不是来读完整功能清单，而是要判断这个插件会不会真正改变${answers.problem}这件事。`,
       ]),
+      detailImage(proofImage),
+      detailSection(
+        '最常出现的管理或复盘场景',
+        scenes.length
+          ? scenes.map((item) => `${item}：建议写清读者在这个时刻最想看到什么信息，以及插件如何把它集中呈现。`)
+          : ['建议优先说明管理者在哪些时刻会打开插件，以及他需要用它确认什么。']
+      ),
+      detailSection('上线后的变化', buildChangeParagraphs(answers.problem, capabilities)),
+      detailSection(
+        '决策前最值得确认的 3 个点',
+        splitInput(answers.concerns).length
+          ? splitInput(answers.concerns).map((item) => `${item}：建议用一句实话说明，不要写成营销口号。`)
+          : ['建议确认数据来源、权限边界和后续维护方式。']
+      ),
+      detailSection('下一步', [`如果这类变化正是你当前想解决的问题，建议${answers.cta}。`]),
     ]
   }
 
   return [
     paragraph(intro),
-    detailImage(template.image),
     detailSection('适合谁使用', [
-      answers.audience,
-      '如果读者还不确定自己是否适用，可以继续通过能力说明和使用场景来判断。',
+      `${answers.audience}更容易从这类产品中获得价值。这里不要泛泛写“适合企业”，而是要写清角色和职责。`,
     ]),
     detailSection(
-      '核心能力',
-      capabilities.length
-        ? capabilities.map((item) => `${item}，建议在正文里各用一小段自然语言展开。`)
-        : ['建议从协作、权限、流程和服务管理几个方向展开说明。']
-    ),
-    detailSection(
-      '典型使用场景',
+      '它通常出现在什么流程里',
       scenes.length
-        ? scenes.map((item) => `适合用于${item}，如果能配合一张界面截图，读者会更容易理解它在什么环节发挥作用。`)
-        : ['建议结合真实业务环节，说明插件最适合出现在哪些流程节点。']
+        ? scenes.map((item) => `${item}：建议交代谁在这个节点打开插件，为什么必须在这里用。`)
+        : ['建议优先写清产品最常出现的 2 到 3 个业务节点。']
     ),
-    detailSection('补充说明', [
-      '建议在这里补充接入方式、配置成本、适用边界或客户最常见的疑问。',
-      `如果用户看完后希望继续了解，可以引导他${answers.cta}。`,
-    ]),
+    detailImage(proofImage),
+    detailSection(
+      '界面里最值得看的点',
+      capabilities.length
+        ? capabilities.map((item) => `${item}：每个点都应该配截图和一句业务价值，而不是只列功能名。`)
+        : ['建议先挑一个主界面、一个配置界面和一个结果界面。']
+    ),
+    detailSection('上线后的变化', buildChangeParagraphs(answers.problem, capabilities)),
+    detailSection('接入与边界', buildDecisionParagraphs(answers.concerns, answers.cta)),
   ]
 }
 
-function draftPayloadToValue(payload: DraftPayload, template: DetailTemplate = defaultTemplate): Value {
+function draftPayloadToValue(
+  payload: DraftPayload,
+  template: DetailTemplate = defaultTemplate,
+  answers: AssistantAnswers = defaultAnswers
+): Value {
   const sections = Array.isArray(payload.sections) ? payload.sections : []
   const result: Value = []
+  const proofImage = buildProofImage(template, answers)
 
   if (payload.intro?.trim()) {
     result.push(paragraph(payload.intro.trim()))
@@ -400,27 +479,23 @@ function draftPayloadToValue(payload: DraftPayload, template: DetailTemplate = d
 
     if (!title || !paragraphs.length) return
 
-    if (template.id !== 'case' && index === 0) {
-      result.push(detailImage(template.image))
-    }
-
     result.push(detailSection(title, paragraphs))
 
-    if (template.id === 'case' && index === 0) {
-      result.push(detailImage(template.image))
+    if (index === 1) {
+      result.push(detailImage(proofImage))
     }
   })
 
   if (!result.some((node: any) => node?.type === 'detail-image')) {
-    result.splice(Math.min(result.length, 1), 0, detailImage(template.image))
+    result.splice(Math.min(result.length, 2), 0, detailImage(proofImage))
   }
 
-  return result.length ? result : buildDraft(template.answers, template)
+  return result.length ? result : buildDraft(answers, template)
 }
 
 function getNodeText(node: any): string {
   if (!node) return ''
-  if (node.type === 'detail-image') return node.image?.caption || node.image?.alt || ''
+  if (node.type === 'detail-image') return node.image?.title || node.image?.caption || node.image?.alt || ''
   if (Text.isText(node)) return node.text
   if (Array.isArray(node.children)) return node.children.map(getNodeText).join('')
   return ''
@@ -466,9 +541,13 @@ function DetailImageElement(props: PlateElementProps) {
   return (
     <PlateElement as="figure" className="editor-image-block" {...props}>
       <div className="editor-image-frame" contentEditable={false}>
-        <div className="editor-image-badge">详情配图</div>
+        <div className="editor-image-badge">{image.label || '界面证据'}</div>
         <img className="editor-image" src={image.src} alt={image.alt || '详情配图'} />
-        <figcaption className="editor-image-caption">{image.caption}</figcaption>
+        <figcaption className="editor-image-copy">
+          <strong className="editor-image-title">{image.title}</strong>
+          <p className="editor-image-caption">{image.caption}</p>
+          <p className="editor-image-value">{image.value}</p>
+        </figcaption>
       </div>
       <span className="editor-image-anchor">{props.children}</span>
     </PlateElement>
@@ -599,7 +678,7 @@ function EditorCanvas({
       >
         <PlateContent
           className="editor-content"
-          placeholder="请输入插件详情（已模拟图文混排场景）"
+          placeholder="按 B 端市场页的方式组织：一句定位、使用流程、界面证据、上线变化、接入边界。"
         />
       </Plate>
     </div>
@@ -614,7 +693,12 @@ function PreviewBlock({ node }: { node: any }) {
     return (
       <figure className="draft-image-card">
         <img className="draft-image" src={image.src} alt={image.alt || '详情配图'} />
-        <figcaption className="draft-image-caption">{image.caption}</figcaption>
+        <figcaption className="draft-image-copy">
+          <span className="draft-image-label">{image.label || '界面证据'}</span>
+          <strong className="draft-image-title">{image.title}</strong>
+          <p className="draft-image-caption">{image.caption}</p>
+          <p className="draft-image-value">{image.value}</p>
+        </figcaption>
       </figure>
     )
   }
@@ -736,7 +820,7 @@ function AssistantDrawer({
         <div className="assistant-drawer__header">
           <div>
             <strong>AI 助手</strong>
-            <span>在当前详情编辑页里，边问边写，最后插入富文本。</span>
+            <span>先补关键事实，再生成更像 B 端市场页的产品说明。</span>
           </div>
           <button className="drawer-close" type="button" onClick={onClose}>
             关闭
@@ -749,7 +833,7 @@ function AssistantDrawer({
         </div>
 
         <div className="assistant-block">
-          <div className="assistant-block__title">模板</div>
+          <div className="assistant-block__title">表达模板</div>
           <TemplateGallery
             activeTemplateId={selectedTemplateId}
             onSelect={onSelectTemplate}
@@ -775,7 +859,7 @@ function AssistantDrawer({
         </div>
 
         <div className="assistant-block grow">
-          <div className="assistant-block__title">对话引导</div>
+          <div className="assistant-block__title">关键事实</div>
           <div className="conversation-list">
             {assistantPrompts.slice(0, currentStep).map((item, index) => (
               <div key={item.key} className="conversation-item">
@@ -795,9 +879,7 @@ function AssistantDrawer({
                 disabled={isGenerating}
                 value={answers[activePrompt.key]}
                 placeholder={activePrompt.placeholder}
-                onChange={(event) =>
-                  onChangeAnswer(activePrompt.key as keyof AssistantAnswers, event.target.value)
-                }
+                onChange={(event) => onChangeAnswer(activePrompt.key, event.target.value)}
               />
             </div>
           </div>
@@ -821,7 +903,7 @@ function AssistantDrawer({
 
         <div className="assistant-block">
           <div className="assistant-result-head">
-            <div className="assistant-block__title">生成结果</div>
+            <div className="assistant-block__title">草稿预览</div>
             <button className="ghost-button" onClick={onGenerate} disabled={isGenerating}>
               {isGenerating ? '生成中...' : '生成草稿'}
             </button>
@@ -857,6 +939,7 @@ function App() {
   const [statusLabel, setStatusLabel] = useState(`当前模板：${defaultTemplate.title}`)
 
   const selectedTemplate = getTemplateById(selectedTemplateId)
+  const selectedProofImage = buildProofImage(selectedTemplate, answers)
 
   const updateAnswer = (key: keyof AssistantAnswers, nextValue: string) => {
     setAnswers((current) => ({ ...current, [key]: nextValue }))
@@ -917,7 +1000,7 @@ function App() {
       }
 
       const payload = (await response.json()) as { draft: DraftPayload; model?: string }
-      setDraft(draftPayloadToValue(payload.draft, selectedTemplate))
+      setDraft(draftPayloadToValue(payload.draft, selectedTemplate, answers))
       setStatusLabel(
         payload.model
           ? `已使用 ${selectedTemplate.title} · AI 模型：${payload.model}`
@@ -1025,7 +1108,7 @@ function App() {
 
               <div className="sim-row">
                 <label>插件短描述</label>
-                <input className="sim-input" value="AI 协助生成更自然的插件详情内容" readOnly />
+                <input className="sim-input" value="AI 辅助生成更像 B 端市场页的插件详情内容" readOnly />
               </div>
 
               <div className="sim-row">
@@ -1039,8 +1122,8 @@ function App() {
                   <div className="template-strip">
                     <div className="template-strip__header">
                       <div>
-                        <strong>详情模板</strong>
-                        <span>先选模板，再让 AI 帮你补正文和图文结构</span>
+                        <strong>表达模板</strong>
+                        <span>先选“怎么讲”，再让 AI 帮你补成更像应用市场 listing 的产品说明。</span>
                       </div>
                       <span className="template-strip__meta">{selectedTemplate.layoutHint}</span>
                     </div>
@@ -1049,9 +1132,16 @@ function App() {
                       onSelect={applyTemplate}
                       variant="compact"
                     />
+                    <div className="template-outline">
+                      <span>一句定位</span>
+                      <span>使用流程</span>
+                      <span>界面证据</span>
+                      <span>上线变化</span>
+                      <span>接入边界</span>
+                    </div>
                   </div>
                   <div className="editor-hint-row">
-                    <span>已模拟正文图片场景，AI 生成时会自动插入图文段落</span>
+                    <span>别写成长文宣传稿，按“场景 + 图证 + 决策信息”来组织</span>
                     <button className="inline-ai-entry" type="button" onClick={() => setDrawerOpen(true)}>
                       <AiSparkIcon />
                       AI 助手
@@ -1066,12 +1156,13 @@ function App() {
                     />
                   </div>
                   <div className="editor-media-strip">
-                    <div className="editor-media-strip__label">当前正文配图</div>
+                    <div className="editor-media-strip__label">当前图证结构</div>
                     <div className="editor-media-card">
-                      <img src={selectedTemplate.image.src} alt={selectedTemplate.image.alt} />
+                      <img src={selectedProofImage.src} alt={selectedProofImage.alt} />
                       <div>
-                        <strong>{selectedTemplate.image.alt}</strong>
-                        <span>{selectedTemplate.image.caption}</span>
+                        <strong>{selectedProofImage.title}</strong>
+                        <span>{selectedProofImage.caption}</span>
+                        <em>{selectedProofImage.value}</em>
                       </div>
                     </div>
                   </div>

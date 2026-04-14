@@ -353,31 +353,6 @@ function buildProofImage(
   }
 }
 
-function buildProofGallery(
-  template: DetailTemplate,
-  answers: AssistantAnswers,
-  capabilities = splitInput(answers.capabilities),
-  scenes = splitInput(answers.scenes)
-) {
-  return template.images.map((image, index) => {
-    const capability = capabilities[index] || image.title
-    const scene = scenes[index] || scenes[0] || '关键业务流程'
-
-    return {
-      ...image,
-      title: capability,
-      caption:
-        index === 0
-          ? `在${scene}里，读者最应该先看到“${capability}”这个界面或动作。`
-          : `在${scene}这个节点里，用这张图补充说明“${capability}”会更自然。`,
-      value:
-        index === template.images.length - 1
-          ? `这张图更适合回答企业客户常问的决策问题：${answers.concerns}。`
-          : `这张图可以继续证明：${answers.problem}`,
-    }
-  })
-}
-
 function serializeValueToText(value: Value) {
   return value
     .map((node: any) => {
@@ -865,11 +840,9 @@ function TemplateGallery({
               </>
             ) : (
               <>
-                <img className="template-thumb" src={template.images[0].src} alt={template.images[0].alt} />
                 <div className="template-copy">
                   <strong>{template.title}</strong>
                   <span>{template.description}</span>
-                  <em>{template.layoutHint}</em>
                 </div>
               </>
             )}
@@ -954,7 +927,7 @@ function AssistantDrawer({
         </div>
 
         <div className="assistant-block">
-          <div className="assistant-block__title">行业范例</div>
+          <div className="assistant-block__title">快捷范例</div>
           <div className="example-list">
             {assistantExamples.map((example) => (
               <button
@@ -1051,7 +1024,6 @@ function App() {
   const [statusLabel, setStatusLabel] = useState(`当前模板：${defaultTemplate.title}`)
 
   const selectedTemplate = getTemplateById(selectedTemplateId)
-  const selectedProofGallery = buildProofGallery(selectedTemplate, answers)
 
   const updateAnswer = (key: keyof AssistantAnswers, nextValue: string) => {
     setAnswers((current) => ({ ...current, [key]: nextValue }))
@@ -1231,17 +1203,8 @@ function App() {
               <div className="sim-row editor-row">
                 <label>插件详情</label>
                 <div className="editor-field">
-                  <div className="template-inline-bar">
-                    <span className="template-inline-label">表达模板</span>
-                    <TemplateGallery
-                      activeTemplateId={selectedTemplateId}
-                      onSelect={applyTemplate}
-                      variant="compact"
-                    />
-                    <span className="template-inline-meta">{selectedTemplate.title}</span>
-                  </div>
                   <div className="editor-hint-row">
-                    <span>{selectedTemplate.layoutHint}</span>
+                    <span>通过 AI 助手选择模板、补关键事实，再生成详情。</span>
                     <button className="inline-ai-entry" type="button" onClick={() => setDrawerOpen(true)}>
                       <AiSparkIcon />
                       AI 助手
@@ -1254,21 +1217,6 @@ function App() {
                       onChange={setValue}
                       onOpenAi={() => setDrawerOpen(true)}
                     />
-                  </div>
-                  <div className="editor-media-strip">
-                    <div className="editor-media-strip__label">当前图证结构</div>
-                    <div className="editor-media-grid">
-                      {selectedProofGallery.map((image, index) => (
-                        <div key={`${image.title}-${index}`} className="editor-media-card">
-                          <img src={image.src} alt={image.alt} />
-                          <div>
-                            <strong>{image.title}</strong>
-                            <span>{image.caption}</span>
-                            <em>{image.value}</em>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                   <div className="field-error">此项为必填项</div>
                 </div>

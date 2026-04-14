@@ -15,7 +15,7 @@ import {
   ItalicPlugin,
   UnderlinePlugin,
 } from '@platejs/basic-nodes/react'
-import { Element as SlateElement, Text, Transforms } from 'slate'
+import { Element as SlateElement, Node, Path, Text, Transforms } from 'slate'
 import './App.css'
 import heroImage from './assets/hero.png'
 import capabilityImage from './assets/screenshot-capability.svg'
@@ -641,6 +641,10 @@ function getNodeText(node: any): string {
   return ''
 }
 
+function cloneNode<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value))
+}
+
 async function copyDraftToClipboard(value: Value) {
   const plainText = serializeValueToText(value)
   const htmlText = serializeValueToHtml(value)
@@ -659,43 +663,206 @@ async function copyDraftToClipboard(value: Value) {
   await navigator.clipboard.writeText(plainText)
 }
 
+function createBlockByType(type: 'p' | 'h2' | 'detail-image' | 'two-column-section' | 'callout-box') {
+  if (type === 'h2') return heading2('新标题')
+  if (type === 'detail-image') return detailImage(editorImageLibrary[0])
+  if (type === 'two-column-section') return twoColumnSection()
+  if (type === 'callout-box') return calloutBox()
+  return paragraph('新段落')
+}
+
+function EditorBlockChrome({
+  children,
+  editor,
+  path,
+}: {
+  children: React.ReactNode
+  editor: any
+  path: number[]
+}) {
+  const [insertOpen, setInsertOpen] = useState(false)
+  const isTopLevelBlock = path.length === 1
+  const blockIndex = path[0]
+  const totalBlocks = Array.isArray(editor?.children) ? editor.children.length : 0
+
+  if (!isTopLevelBlock) return <>{children}</>
+
+  const moveBlock = (direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? blockIndex - 1 : blockIndex + 1
+    if (targetIndex < 0 || targetIndex >= totalBlocks) return
+
+    const node = cloneNode(Node.get(editor, path))
+    Transforms.removeNodes(editor, { at: path })
+    Transforms.insertNodes(editor, node as any, { at: [targetIndex] })
+  }
+
+  const insertBlockAfter = (
+    type: 'p' | 'h2' | 'detail-image' | 'two-column-section' | 'callout-box'
+  ) => {
+    Transforms.insertNodes(editor, createBlockByType(type) as any, { at: Path.next(path) })
+    setInsertOpen(false)
+  }
+
+  return (
+    <div className="editor-block-shell">
+      <div className="editor-block-controls" contentEditable={false}>
+        <button
+          className="editor-block-handle"
+          type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            moveBlock('up')
+          }}
+          disabled={blockIndex === 0}
+        >
+          ⋮⋮
+        </button>
+        <button
+          className="editor-block-icon"
+          type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            moveBlock('up')
+          }}
+          disabled={blockIndex === 0}
+        >
+          ↑
+        </button>
+        <button
+          className="editor-block-icon"
+          type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            moveBlock('down')
+          }}
+          disabled={blockIndex === totalBlocks - 1}
+        >
+          ↓
+        </button>
+        <div className="editor-block-insert-wrap">
+          <button
+            className={insertOpen ? 'editor-block-icon active' : 'editor-block-icon'}
+            type="button"
+            onMouseDown={(event) => {
+              event.preventDefault()
+              setInsertOpen((current) => !current)
+            }}
+          >
+            +
+          </button>
+          {insertOpen ? (
+            <div className="editor-block-insert-menu">
+              <button type="button" onMouseDown={(event) => { event.preventDefault(); insertBlockAfter('p') }}>
+                段落
+              </button>
+              <button type="button" onMouseDown={(event) => { event.preventDefault(); insertBlockAfter('h2') }}>
+                标题
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertBlockAfter('detail-image')
+                }}
+              >
+                截图
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertBlockAfter('two-column-section')
+                }}
+              >
+                分栏
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insertBlockAfter('callout-box')
+                }}
+              >
+                色块
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <div className="editor-block-body">{children}</div>
+    </div>
+  )
+}
+
 function ParagraphElement(props: PlateElementProps) {
-  return <PlateElement as="p" className="editor-p" {...props} />
+  return (
+    <PlateElement as="div" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <p className="editor-p">{props.children}</p>
+      </EditorBlockChrome>
+    </PlateElement>
+  )
 }
 
 function H2Element(props: PlateElementProps) {
-  return <PlateElement as="h2" className="editor-h2" {...props} />
+  return (
+    <PlateElement as="div" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <h2 className="editor-h2">{props.children}</h2>
+      </EditorBlockChrome>
+    </PlateElement>
+  )
 }
 
 function H3Element(props: PlateElementProps) {
-  return <PlateElement as="h3" className="editor-h3" {...props} />
+  return (
+    <PlateElement as="div" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <h3 className="editor-h3">{props.children}</h3>
+      </EditorBlockChrome>
+    </PlateElement>
+  )
 }
 
 function DetailSectionElement(props: PlateElementProps) {
-  return <PlateElement as="section" className="editor-section" {...props} />
+  return (
+    <PlateElement as="section" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <div className="editor-section">{props.children}</div>
+      </EditorBlockChrome>
+    </PlateElement>
+  )
 }
 
 function DetailImageElement(props: PlateElementProps) {
   const image = (props.element as any).image || {}
 
   return (
-    <PlateElement as="figure" className="editor-image-block" {...props}>
-      <div className="editor-image-frame" contentEditable={false}>
-        <div className="editor-image-badge">{image.label || '界面证据'}</div>
-        <img className="editor-image" src={image.src} alt={image.alt || '详情配图'} />
-        <figcaption className="editor-image-copy">
-          <strong className="editor-image-title">{image.title}</strong>
-          <p className="editor-image-caption">{image.caption}</p>
-          <p className="editor-image-value">{image.value}</p>
-        </figcaption>
-      </div>
-      <span className="editor-image-anchor">{props.children}</span>
+    <PlateElement as="figure" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <div className="editor-image-frame" contentEditable={false}>
+          <div className="editor-image-badge">{image.label || '界面证据'}</div>
+          <img className="editor-image" src={image.src} alt={image.alt || '详情配图'} />
+          <figcaption className="editor-image-copy">
+            <strong className="editor-image-title">{image.title}</strong>
+            <p className="editor-image-caption">{image.caption}</p>
+            <p className="editor-image-value">{image.value}</p>
+          </figcaption>
+        </div>
+        <span className="editor-image-anchor">{props.children}</span>
+      </EditorBlockChrome>
     </PlateElement>
   )
 }
 
 function TwoColumnSectionElement(props: PlateElementProps) {
-  return <PlateElement as="section" className="editor-two-column" {...props} />
+  return (
+    <PlateElement as="section" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <div className="editor-two-column">{props.children}</div>
+      </EditorBlockChrome>
+    </PlateElement>
+  )
 }
 
 function ColumnItemElement(props: PlateElementProps) {
@@ -703,7 +870,13 @@ function ColumnItemElement(props: PlateElementProps) {
 }
 
 function CalloutBoxElement(props: PlateElementProps) {
-  return <PlateElement as="section" className="editor-callout" {...props} />
+  return (
+    <PlateElement as="section" className="editor-block" {...props}>
+      <EditorBlockChrome editor={props.editor} path={props.path as number[]}>
+        <div className="editor-callout">{props.children}</div>
+      </EditorBlockChrome>
+    </PlateElement>
+  )
 }
 
 const ParagraphPlugin = createPlatePlugin({

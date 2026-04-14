@@ -427,6 +427,95 @@ img {
   gap: 12px;
 }
 
+.editor-block {
+  position: relative;
+}
+
+.editor-block-shell {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.editor-block-controls {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editor-block:hover .editor-block-controls {
+  opacity: 1;
+}
+
+.editor-block-body {
+  min-width: 0;
+}
+
+.editor-block-handle,
+.editor-block-icon,
+.editor-block-insert-menu button {
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #667085;
+  cursor: pointer;
+}
+
+.editor-block-handle,
+.editor-block-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 12px;
+}
+
+.editor-block-handle {
+  letter-spacing: -2px;
+}
+
+.editor-block-icon.active {
+  border-color: #c4b5fd;
+  color: #7c3aed;
+  background: #faf5ff;
+}
+
+.editor-block-handle:disabled,
+.editor-block-icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.editor-block-insert-wrap {
+  position: relative;
+}
+
+.editor-block-insert-menu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  z-index: 5;
+  width: 128px;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.editor-block-insert-menu button {
+  min-height: 30px;
+  padding: 0 10px;
+  text-align: left;
+}
+
 .editor-section {
   display: grid;
   gap: 8px;
@@ -921,6 +1010,21 @@ img {
   .assistant-result-head {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .editor-block-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-block-controls {
+    opacity: 1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .editor-block-insert-menu {
+    left: 0;
+    top: calc(100% + 8px);
   }
 
   .editor-two-column,

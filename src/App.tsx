@@ -858,12 +858,21 @@ function TemplateGallery({
             type="button"
             onClick={() => onSelect(template)}
           >
-            <img className="template-thumb" src={template.images[0].src} alt={template.images[0].alt} />
-            <div className="template-copy">
-              <strong>{template.title}</strong>
-              <span>{template.description}</span>
-              <em>{template.layoutHint}</em>
-            </div>
+            {variant === 'compact' ? (
+              <>
+                <strong>{template.title}</strong>
+                <span>{template.description}</span>
+              </>
+            ) : (
+              <>
+                <img className="template-thumb" src={template.images[0].src} alt={template.images[0].alt} />
+                <div className="template-copy">
+                  <strong>{template.title}</strong>
+                  <span>{template.description}</span>
+                  <em>{template.layoutHint}</em>
+                </div>
+              </>
+            )}
           </button>
         )
       })}
@@ -1226,21 +1235,18 @@ function App() {
                     <div className="template-strip__header">
                       <div>
                         <strong>表达模板</strong>
-                        <span>先选“怎么讲”，再让 AI 帮你补成更像应用市场 listing 的产品说明。</span>
+                        <span>先定讲法，再继续写详情。</span>
                       </div>
-                      <span className="template-strip__meta">{selectedTemplate.layoutHint}</span>
+                      <span className="template-strip__meta">当前模板：{selectedTemplate.title}</span>
                     </div>
                     <TemplateGallery
                       activeTemplateId={selectedTemplateId}
                       onSelect={applyTemplate}
                       variant="compact"
                     />
-                    <div className="template-outline">
-                      <span>一句定位</span>
-                      <span>使用流程</span>
-                      <span>界面证据</span>
-                      <span>上线变化</span>
-                      <span>接入边界</span>
+                    <div className="template-brief">
+                      <span>{selectedTemplate.description}</span>
+                      <em>{selectedTemplate.layoutHint}</em>
                     </div>
                   </div>
                   <div className="editor-hint-row">

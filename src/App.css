@@ -407,6 +407,10 @@ img {
   font-size: 12px;
 }
 
+.editor-file-input {
+  display: none;
+}
+
 .toolbar-spacer {
   flex: 1;
 }
@@ -426,6 +430,30 @@ img {
 .editor-section {
   display: grid;
   gap: 8px;
+}
+
+.editor-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.editor-column-item {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fcfcfd;
+}
+
+.editor-callout {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #d9f1ee;
+  border-radius: 12px;
+  background: #f2fbfa;
 }
 
 .editor-p {
@@ -762,6 +790,30 @@ img {
   font-size: 14px;
 }
 
+.draft-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.draft-column-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fcfcfd;
+}
+
+.draft-callout {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d9f1ee;
+  border-radius: 10px;
+  background: #f2fbfa;
+}
+
 .draft-paragraph {
   margin: 0;
   color: #475467;
@@ -868,6 +920,11 @@ img {
   .editor-hint-row,
   .assistant-result-head {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .editor-two-column,
+  .draft-columns {
     grid-template-columns: 1fr;
   }
 

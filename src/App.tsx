@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Value } from 'platejs'
 import {
   Plate,
@@ -291,7 +291,21 @@ const assistantExamples: AssistantExample[] = [
 
 const defaultTemplate = detailTemplates[0]
 const defaultAnswers: AssistantAnswers = defaultTemplate.answers
-const customBlockTypes = new Set(['detail-section', 'detail-image'])
+const editorImageLibrary: DetailImage[] = Array.from(
+  new Map(
+    detailTemplates
+      .flatMap((template) => template.images)
+      .map((image) => [image.src, image])
+  ).values()
+)
+
+const customBlockTypes = new Set([
+  'detail-section',
+  'detail-image',
+  'two-column-section',
+  'column-item',
+  'callout-box',
+])
 
 function text(textValue: string, marks: Record<string, boolean> = {}) {
   return { text: textValue, ...marks }
@@ -317,6 +331,33 @@ function detailImage(image: DetailImage) {
     type: 'detail-image',
     image,
     children: [text('')],
+  }
+}
+
+function columnItem(title: string, description: string) {
+  return {
+    type: 'column-item',
+    children: [heading2(title), paragraph(description)],
+  }
+}
+
+function twoColumnSection() {
+  return {
+    type: 'two-column-section',
+    children: [
+      columnItem('左侧内容', '适合放场景、流程节点或某个重点能力的解释。'),
+      columnItem('右侧内容', '适合放补充说明、对照信息或另一组能力要点。'),
+    ],
+  }
+}
+
+function calloutBox() {
+  return {
+    type: 'callout-box',
+    children: [
+      heading2('重点说明'),
+      paragraph('适合放关键提醒、边界说明、接入条件或希望用户优先看到的内容。'),
+    ],
   }
 }
 
@@ -395,6 +436,27 @@ function serializeValueToHtml(value: Value) {
           '</figcaption>',
           '</figure>',
         ].join('')
+      }
+      if (node.type === 'two-column-section') {
+        const columns = (node.children ?? [])
+          .map((column: any) => {
+            const [titleNode, ...bodyNodes] = column.children ?? []
+            const title = `<h3>${escapeHtml(getNodeText(titleNode))}</h3>`
+            const paragraphs = bodyNodes
+              .map((child: any) => `<p>${escapeHtml(getNodeText(child))}</p>`)
+              .join('')
+            return `<div>${title}${paragraphs}</div>`
+          })
+          .join('')
+        return `<section>${columns}</section>`
+      }
+      if (node.type === 'callout-box') {
+        const [titleNode, ...bodyNodes] = node.children ?? []
+        const title = `<h3>${escapeHtml(getNodeText(titleNode))}</h3>`
+        const paragraphs = bodyNodes
+          .map((child: any) => `<p>${escapeHtml(getNodeText(child))}</p>`)
+          .join('')
+        return `<section>${title}${paragraphs}</section>`
       }
       if (node.type === 'detail-section') {
         const [titleNode, ...paragraphNodes] = node.children ?? []
@@ -632,6 +694,18 @@ function DetailImageElement(props: PlateElementProps) {
   )
 }
 
+function TwoColumnSectionElement(props: PlateElementProps) {
+  return <PlateElement as="section" className="editor-two-column" {...props} />
+}
+
+function ColumnItemElement(props: PlateElementProps) {
+  return <PlateElement as="div" className="editor-column-item" {...props} />
+}
+
+function CalloutBoxElement(props: PlateElementProps) {
+  return <PlateElement as="section" className="editor-callout" {...props} />
+}
+
 const ParagraphPlugin = createPlatePlugin({
   key: 'p',
   node: { isElement: true, type: 'p', component: ParagraphElement },
@@ -647,6 +721,21 @@ const DetailImagePlugin = createPlatePlugin({
   node: { isElement: true, type: 'detail-image', component: DetailImageElement },
 })
 
+const TwoColumnSectionPlugin = createPlatePlugin({
+  key: 'two-column-section',
+  node: { isElement: true, type: 'two-column-section', component: TwoColumnSectionElement },
+})
+
+const ColumnItemPlugin = createPlatePlugin({
+  key: 'column-item',
+  node: { isElement: true, type: 'column-item', component: ColumnItemElement },
+})
+
+const CalloutBoxPlugin = createPlatePlugin({
+  key: 'callout-box',
+  node: { isElement: true, type: 'callout-box', component: CalloutBoxElement },
+})
+
 const plugins = [
   ParagraphPlugin.withComponent(ParagraphElement),
   H2Plugin.withComponent(H2Element),
@@ -656,6 +745,9 @@ const plugins = [
   UnderlinePlugin,
   DetailSectionPlugin,
   DetailImagePlugin,
+  TwoColumnSectionPlugin,
+  ColumnItemPlugin,
+  CalloutBoxPlugin,
 ]
 
 function AiSparkIcon() {
@@ -675,6 +767,7 @@ function EditorCanvas({
     plugins,
     value: initialValue,
   })
+  const uploadInputRef = useRef<HTMLInputElement | null>(null)
 
   if (!editor) return null
   const plateEditor = editor as any
@@ -688,6 +781,42 @@ function EditorCanvas({
           SlateElement.isElement(node) && !customBlockTypes.has((node as any).type),
       }
     )
+  }
+
+  const insertScreenshotBlock = () => {
+    Transforms.insertNodes(plateEditor, detailImage(editorImageLibrary[0]) as any)
+  }
+
+  const insertColumnsBlock = () => {
+    Transforms.insertNodes(plateEditor, twoColumnSection() as any)
+  }
+
+  const insertCalloutBlock = () => {
+    Transforms.insertNodes(plateEditor, calloutBox() as any)
+  }
+
+  const onUploadScreenshot = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        Transforms.insertNodes(
+          plateEditor,
+          detailImage({
+            ...editorImageLibrary[0],
+            src: reader.result,
+            alt: file.name || '截图',
+            title: '产品截图',
+            caption: '已插入截图，可继续在下方补充说明。',
+            value: '建议补一句这张图说明了什么，避免只贴图不解释。',
+          }) as any
+        )
+      }
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
   }
 
   return (
@@ -741,6 +870,45 @@ function EditorCanvas({
         >
           小标题
         </button>
+        <button
+          onMouseDown={(event) => {
+            event.preventDefault()
+            uploadInputRef.current?.click()
+          }}
+        >
+          截图
+        </button>
+        <button
+          onMouseDown={(event) => {
+            event.preventDefault()
+            insertColumnsBlock()
+          }}
+        >
+          分栏
+        </button>
+        <button
+          onMouseDown={(event) => {
+            event.preventDefault()
+            insertCalloutBlock()
+          }}
+        >
+          色块
+        </button>
+        <button
+          onMouseDown={(event) => {
+            event.preventDefault()
+            insertScreenshotBlock()
+          }}
+        >
+          配图
+        </button>
+        <input
+          ref={uploadInputRef}
+          className="editor-file-input"
+          type="file"
+          accept="image/*"
+          onChange={onUploadScreenshot}
+        />
         <div className="toolbar-spacer" />
         <button className="editor-ai-button" type="button" onClick={onOpenAi}>
           <AiSparkIcon />
@@ -778,6 +946,36 @@ function PreviewBlock({ node }: { node: any }) {
           <p className="draft-image-value">{image.value}</p>
         </figcaption>
       </figure>
+    )
+  }
+
+  if (node.type === 'two-column-section') {
+    return (
+      <section className="draft-columns">
+        {node.children?.map((child: any, index: number) => (
+          <div key={`column-${index}`} className="draft-column-card">
+            <h3 className="draft-title">{getNodeText(child.children?.[0])}</h3>
+            {child.children?.slice(1).map((item: any, bodyIndex: number) => (
+              <p key={`column-body-${bodyIndex}`} className="draft-paragraph">
+                {getNodeText(item)}
+              </p>
+            ))}
+          </div>
+        ))}
+      </section>
+    )
+  }
+
+  if (node.type === 'callout-box') {
+    return (
+      <section className="draft-callout">
+        <h3 className="draft-title">{getNodeText(node.children?.[0])}</h3>
+        {node.children?.slice(1).map((child: any, index: number) => (
+          <p key={`callout-${index}`} className="draft-paragraph">
+            {getNodeText(child)}
+          </p>
+        ))}
+      </section>
     )
   }
 

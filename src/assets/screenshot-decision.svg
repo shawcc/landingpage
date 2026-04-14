@@ -1,0 +1,18 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="760" rx="32" fill="#F7F8FC"/>
+<rect x="32" y="32" width="1136" height="696" rx="24" fill="white" stroke="#D8E2F0"/>
+<rect x="72" y="72" width="220" height="32" rx="10" fill="#E0F2FE"/>
+<rect x="72" y="124" width="300" height="18" rx="9" fill="#CBD5E1"/>
+<rect x="72" y="180" width="340" height="150" rx="20" fill="#111827"/>
+<rect x="436" y="180" width="316" height="150" rx="20" fill="#E0F2FE"/>
+<rect x="776" y="180" width="352" height="150" rx="20" fill="#ECFCCB"/>
+<rect x="72" y="362" width="1056" height="302" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+<path d="M120 586C180 534 228 520 286 488C344 456 392 498 452 470C510 442 568 382 624 400C682 418 730 504 792 500C850 498 910 430 980 420C1036 412 1068 430 1080 436" stroke="#2563EB" stroke-width="10" stroke-linecap="round"/>
+<circle cx="286" cy="488" r="12" fill="#2563EB"/>
+<circle cx="624" cy="400" r="12" fill="#2563EB"/>
+<circle cx="980" cy="420" r="12" fill="#2563EB"/>
+<text x="96" y="234" fill="#FFFFFF" font-size="42" font-family="Arial" font-weight="700">+18%</text>
+<text x="462" y="238" fill="#0F766E" font-size="42" font-family="Arial" font-weight="700">43</text>
+<text x="804" y="238" fill="#4D7C0F" font-size="42" font-family="Arial" font-weight="700">7m</text>
+<text x="84" y="95" fill="#0369A1" font-size="18" font-family="Arial">Executive Summary</text>
+</svg>

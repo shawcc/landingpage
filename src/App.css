@@ -575,16 +575,26 @@ img {
   font-weight: 700;
 }
 
+.editor-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .editor-media-card {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 10px;
   align-items: start;
+  padding: 10px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .editor-media-card img {
-  width: 112px;
-  height: 80px;
+  width: 100%;
+  height: 120px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid #e4e7ec;
@@ -977,6 +987,10 @@ img {
   }
 
   .editor-media-card {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-media-grid {
     grid-template-columns: 1fr;
   }
 

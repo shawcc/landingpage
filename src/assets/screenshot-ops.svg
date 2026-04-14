@@ -1,0 +1,15 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1200" height="760" rx="32" fill="#F7FAFC"/>
+<rect x="32" y="32" width="1136" height="696" rx="24" fill="white" stroke="#D8E2F0"/>
+<rect x="72" y="72" width="180" height="32" rx="10" fill="#DCFCE7"/>
+<rect x="72" y="126" width="260" height="18" rx="9" fill="#CBD5E1"/>
+<rect x="72" y="180" width="1056" height="136" rx="20" fill="#0F172A"/>
+<rect x="72" y="348" width="514" height="316" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+<rect x="614" y="348" width="514" height="316" rx="20" fill="#F8FAFC" stroke="#E2E8F0"/>
+<rect x="108" y="392" width="442" height="26" rx="13" fill="#E2E8F0"/>
+<rect x="108" y="436" width="442" height="26" rx="13" fill="#DBEAFE"/>
+<rect x="108" y="480" width="260" height="26" rx="13" fill="#E2E8F0"/>
+<rect x="650" y="392" width="442" height="184" rx="18" fill="#E0F2FE"/>
+<text x="96" y="95" fill="#166534" font-size="18" font-family="Arial">Operations Board</text>
+<text x="102" y="236" fill="#FFFFFF" font-size="24" font-family="Arial">Queue · Alerts · SLA</text>
+</svg>

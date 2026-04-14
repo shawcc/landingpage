@@ -18,6 +18,11 @@ import {
 import { Element as SlateElement, Text, Transforms } from 'slate'
 import './App.css'
 import heroImage from './assets/hero.png'
+import capabilityImage from './assets/screenshot-capability.svg'
+import decisionImage from './assets/screenshot-decision.svg'
+import integrationImage from './assets/screenshot-integration.svg'
+import opsImage from './assets/screenshot-ops.svg'
+import scenarioImage from './assets/screenshot-scenario.svg'
 
 type AssistantAnswers = {
   audience: string
@@ -51,7 +56,7 @@ type DetailTemplate = {
   answers: AssistantAnswers
   description: string
   id: DetailTemplateId
-  image: DetailImage
+  images: DetailImage[]
   layoutHint: string
   title: string
 }
@@ -106,14 +111,32 @@ const detailTemplates: DetailTemplate[] = [
     title: '场景型',
     description: '适合先讲谁在什么流程里使用，再用一张界面图证明产品确实能落地。',
     layoutHint: '一句定位 + 使用流程 + 界面证据 + 上线变化 + 接入边界',
-    image: {
-      src: heroImage,
-      alt: '工单协同界面示意',
-      label: '界面证据',
-      title: '统一工单协同台',
-      caption: '把受理、分派、升级和跟进放到同一个界面里，减少跨系统切换。',
-      value: '适合用来证明这不是概念介绍，而是已经能支撑真实协同流程的产品。',
-    },
+    images: [
+      {
+        src: scenarioImage,
+        alt: '工单协同界面示意',
+        label: '界面证据',
+        title: '统一工单协同台',
+        caption: '把受理、分派、升级和跟进放到同一个界面里，减少跨系统切换。',
+        value: '适合用来证明这不是概念介绍，而是已经能支撑真实协同流程的产品。',
+      },
+      {
+        src: opsImage,
+        alt: '告警与 SLA 看板示意',
+        label: '流程证据',
+        title: '队列与 SLA 监控',
+        caption: '把待处理队列、告警和超时状态收进同一个运营视图里。',
+        value: '适合补充说明团队不是只“看见工单”，而是真的在持续运营流程。',
+      },
+      {
+        src: integrationImage,
+        alt: '权限与配置界面示意',
+        label: '接入证据',
+        title: '权限与配置边界',
+        caption: '把角色权限、字段映射和接入步骤集中说明，方便企业客户评估上线成本。',
+        value: '适合回答“能不能接、谁能看、影响不影响现有流程”这类问题。',
+      },
+    ],
     answers: {
       problem: '让客服、运营和实施在同一条工单链路里协同，不再靠群消息追进度。',
       audience: '客服主管、一线客服、实施顾问和运营负责人。',
@@ -128,14 +151,32 @@ const detailTemplates: DetailTemplate[] = [
     title: '能力型',
     description: '适合核心界面很有说服力的插件，重点把 3 个关键界面讲透。',
     layoutHint: '一句定位 + 关键界面 + 能力亮点 + 使用流程 + 接入边界',
-    image: {
-      src: heroImage,
-      alt: '营销配置界面示意',
-      label: '关键界面',
-      title: '活动配置台',
-      caption: '规则、条件和生效范围集中在一个工作台完成，降低复杂活动配置的理解成本。',
-      value: '适合用来证明产品的价值来自界面和动作设计，而不是堆概念。',
-    },
+    images: [
+      {
+        src: capabilityImage,
+        alt: '营销配置界面示意',
+        label: '关键界面',
+        title: '活动配置台',
+        caption: '规则、条件和生效范围集中在一个工作台完成，降低复杂活动配置的理解成本。',
+        value: '适合用来证明产品的价值来自界面和动作设计，而不是堆概念。',
+      },
+      {
+        src: heroImage,
+        alt: '规则校验界面示意',
+        label: '能力证据',
+        title: '规则校验提醒',
+        caption: '上线前先暴露规则冲突和条件覆盖问题，减少人工回查。',
+        value: '适合补充说明产品不只是“能配”，而且能减少出错。',
+      },
+      {
+        src: decisionImage,
+        alt: '活动效果看板示意',
+        label: '结果证据',
+        title: '效果看板',
+        caption: '把关键活动数据和异常变化收在一个视图里，方便快速复盘。',
+        value: '适合说明配置动作最终会如何反馈到业务结果上。',
+      },
+    ],
     answers: {
       problem: '让商家更快配置复杂营销活动，减少人工校验和上线错误。',
       audience: '电商运营、增长团队、活动配置人员和业务负责人。',
@@ -150,14 +191,32 @@ const detailTemplates: DetailTemplate[] = [
     title: '接入型',
     description: '适合客户最关心接入成本和权限边界的插件，先把风险说清楚。',
     layoutHint: '一句定位 + 接入方式 + 权限范围 + 界面证据 + 适用边界',
-    image: {
-      src: heroImage,
-      alt: '接入与权限界面示意',
-      label: '接入证明',
-      title: '配置与权限面板',
-      caption: '把权限、字段映射和流程配置集中管理，降低上线前沟通成本。',
-      value: '适合用来回答企业客户最常问的“要接多久、谁能看、会不会影响现有系统”。',
-    },
+    images: [
+      {
+        src: integrationImage,
+        alt: '接入与权限界面示意',
+        label: '接入证明',
+        title: '配置与权限面板',
+        caption: '把权限、字段映射和流程配置集中管理，降低上线前沟通成本。',
+        value: '适合用来回答企业客户最常问的“要接多久、谁能看、会不会影响现有系统”。',
+      },
+      {
+        src: scenarioImage,
+        alt: '流程串联界面示意',
+        label: '流程证明',
+        title: '接入后的业务链路',
+        caption: '把接入后的业务流程串起来看，避免只讲配置、不讲使用效果。',
+        value: '适合证明接入完成后，前线团队实际会怎样用到这套能力。',
+      },
+      {
+        src: opsImage,
+        alt: '灰度试运行界面示意',
+        label: '上线证明',
+        title: '灰度与运行状态',
+        caption: '上线前后可以从统一视图观察运行状态，降低切换风险。',
+        value: '适合回答企业客户对灰度、回滚和运行稳定性的担心。',
+      },
+    ],
     answers: {
       problem: '帮助企业在不改动原有主流程的前提下接入新插件，并把权限和配置边界说清楚。',
       audience: '实施团队、系统管理员、IT 管理员和业务 owner。',
@@ -172,14 +231,32 @@ const detailTemplates: DetailTemplate[] = [
     title: '决策型',
     description: '适合给负责人快速判断值不值得上，突出上线后的变化和决策边界。',
     layoutHint: '一句定位 + 适用团队 + 界面证据 + 上线变化 + 决策前确认项',
-    image: {
-      src: heroImage,
-      alt: '经营分析界面示意',
-      label: '结果证明',
-      title: '经营分析总览页',
-      caption: '核心指标、异常变化和跟进动作放在同一屏，减少管理者来回切换系统。',
-      value: '适合用来帮助负责人判断这类产品会不会真正改变团队日常工作方式。',
-    },
+    images: [
+      {
+        src: decisionImage,
+        alt: '经营分析界面示意',
+        label: '结果证明',
+        title: '经营分析总览页',
+        caption: '核心指标、异常变化和跟进动作放在同一屏，减少管理者来回切换系统。',
+        value: '适合用来帮助负责人判断这类产品会不会真正改变团队日常工作方式。',
+      },
+      {
+        src: capabilityImage,
+        alt: '下钻分析界面示意',
+        label: '能力证明',
+        title: '指标下钻分析',
+        caption: '关键数字背后能继续往下看，不会停留在总览层面。',
+        value: '适合帮助决策者判断它是不是“看板好看但不可执行”。',
+      },
+      {
+        src: integrationImage,
+        alt: '数据接入界面示意',
+        label: '边界证明',
+        title: '数据与权限边界',
+        caption: '把数据来源、权限和接入边界说清楚，更利于负责人做最终判断。',
+        value: '适合回答“值不值得上”背后的真实顾虑，而不是只展示结果。',        
+      },
+    ],
     answers: {
       problem: '让管理者和运营团队在同一个界面看到关键经营数据，减少口径不一致和系统切换。',
       audience: '运营负责人、部门管理者、数据分析人员和业务 owner。',
@@ -264,15 +341,41 @@ function buildProofImage(
   capabilities = splitInput(answers.capabilities),
   scenes = splitInput(answers.scenes)
 ): DetailImage {
-  const firstCapability = capabilities[0] || template.image.title
+  const baseImage = template.images[0]
+  const firstCapability = capabilities[0] || baseImage.title
   const firstScene = scenes[0] || '关键业务流程'
 
   return {
-    ...template.image,
+    ...baseImage,
     title: firstCapability,
     caption: `在${firstScene}里，读者最应该看到的是“${firstCapability}”这个动作或界面。`,
     value: `这张图主要证明：${answers.problem}`,
   }
+}
+
+function buildProofGallery(
+  template: DetailTemplate,
+  answers: AssistantAnswers,
+  capabilities = splitInput(answers.capabilities),
+  scenes = splitInput(answers.scenes)
+) {
+  return template.images.map((image, index) => {
+    const capability = capabilities[index] || image.title
+    const scene = scenes[index] || scenes[0] || '关键业务流程'
+
+    return {
+      ...image,
+      title: capability,
+      caption:
+        index === 0
+          ? `在${scene}里，读者最应该先看到“${capability}”这个界面或动作。`
+          : `在${scene}这个节点里，用这张图补充说明“${capability}”会更自然。`,
+      value:
+        index === template.images.length - 1
+          ? `这张图更适合回答企业客户常问的决策问题：${answers.concerns}。`
+          : `这张图可以继续证明：${answers.problem}`,
+    }
+  })
 }
 
 function serializeValueToText(value: Value) {
@@ -755,7 +858,7 @@ function TemplateGallery({
             type="button"
             onClick={() => onSelect(template)}
           >
-            <img className="template-thumb" src={template.image.src} alt={template.image.alt} />
+            <img className="template-thumb" src={template.images[0].src} alt={template.images[0].alt} />
             <div className="template-copy">
               <strong>{template.title}</strong>
               <span>{template.description}</span>
@@ -939,7 +1042,7 @@ function App() {
   const [statusLabel, setStatusLabel] = useState(`当前模板：${defaultTemplate.title}`)
 
   const selectedTemplate = getTemplateById(selectedTemplateId)
-  const selectedProofImage = buildProofImage(selectedTemplate, answers)
+  const selectedProofGallery = buildProofGallery(selectedTemplate, answers)
 
   const updateAnswer = (key: keyof AssistantAnswers, nextValue: string) => {
     setAnswers((current) => ({ ...current, [key]: nextValue }))
@@ -1157,13 +1260,17 @@ function App() {
                   </div>
                   <div className="editor-media-strip">
                     <div className="editor-media-strip__label">当前图证结构</div>
-                    <div className="editor-media-card">
-                      <img src={selectedProofImage.src} alt={selectedProofImage.alt} />
-                      <div>
-                        <strong>{selectedProofImage.title}</strong>
-                        <span>{selectedProofImage.caption}</span>
-                        <em>{selectedProofImage.value}</em>
-                      </div>
+                    <div className="editor-media-grid">
+                      {selectedProofGallery.map((image, index) => (
+                        <div key={`${image.title}-${index}`} className="editor-media-card">
+                          <img src={image.src} alt={image.alt} />
+                          <div>
+                            <strong>{image.title}</strong>
+                            <span>{image.caption}</span>
+                            <em>{image.value}</em>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <div className="field-error">此项为必填项</div>
